@@ -43,3 +43,21 @@ does not exist. Verified the current official release and action inputs through
 the GitHub API, then pinned the action to the v10.3.0 commit. The application and
 dependency lock are unchanged. YAML validation and public-file checks passed;
 the corrected workflow runs the previously passing local suite on GitHub.
+
+## Browser CI timing correction
+
+The next GitHub run passed setup and 32 Python tests, but browser autosave never
+advanced the revision. Reproduced the failure locally with the same locked
+Chromium build: Playwright edited the newly visible form before HTMX's settle
+phase attached its input listener. A second edit after settling saved normally.
+
+The browser test now waits for settling to finish after starting, removing,
+restoring, and marking sets done. It runs at both the default 20 ms delay and
+a longer 200 ms delay to verify synchronization. Autosave, reload persistence,
+and finishing with an immediately edited weight remain required assertions.
+
+Verification: all 34 Python/browser tests passed; the browser checks also passed
+with the longer delay retained after reload. The complete check script passed
+Ruff, compilation, dbt debug/parse/seed/build (eight models and 35 data tests),
+SQLFluff, and the public-file policy. The CI correction is limited to test
+synchronization and these project notes.

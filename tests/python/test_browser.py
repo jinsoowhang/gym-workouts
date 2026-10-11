@@ -13,7 +13,8 @@ from gym_workouts.app import create_app
 @pytest.mark.skipif(
     os.environ.get("GYM_BROWSER_TESTS") != "1", reason="Opt-in browser verification"
 )
-def test_desktop_recording_autosave_removal_and_finish(configured):
+@pytest.mark.parametrize("settle_delay", [20, 200])
+def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay):
     settings, _factory, _service = configured
     app = create_app(settings)
     app.state.service.today = lambda: "2026-10-11"
@@ -36,13 +37,17 @@ def test_desktop_recording_autosave_removal_and_finish(configured):
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}")
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
                 expect(page.get_by_role("heading", name="Workout B", exact=True)).to_be_visible()
                 page.get_by_role("button", name="Start workout", exact=False).click()
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 expect(field).to_have_value("47.5")
+                # Swapped fields appear before HTMX attaches their form's event listeners.
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 field.fill("42.125")
                 expect(page.locator("#revision")).to_have_value("1")
                 page.reload()
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
                 expect(
                     page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 ).to_have_value("42.125")
@@ -50,12 +55,15 @@ def test_desktop_recording_autosave_removal_and_finish(configured):
                 expect(
                     page.get_by_role("button", name="Restore Leg Raise", exact=True)
                 ).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 page.get_by_role("button", name="Restore Leg Raise", exact=True).click()
                 expect(
                     page.get_by_role("button", name="Remove Leg Raise", exact=True)
                 ).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 page.get_by_role("button", name="Mark remaining done").click()
                 expect(page.locator(".set-state").first).to_have_value("performed")
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 # Finish must submit the current input even before a delayed autosave runs.
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 field.fill("40.125")

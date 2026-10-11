@@ -45,3 +45,8 @@ and the profile placement are authorized; machine data remains local.
 
 GitHub CI pins setup-uv to the verified official v10.3.0 commit. The initial
 workflow referenced an unavailable v9 major tag and failed before running checks.
+
+Browser checks must wait for `#workout.htmx-settling` to disappear after a form
+replacement before editing or submitting it. HTMX attaches listeners during
+settling; visible fields alone are insufficient on fast CI runners. The browser
+workflow covers both the default 20 ms and a longer 200 ms settle delay.
