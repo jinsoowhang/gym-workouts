@@ -50,3 +50,8 @@ Browser checks must wait for `#workout.htmx-settling` to disappear after a form
 replacement before editing or submitting it. HTMX attaches listeners during
 settling; visible fields alone are insufficient on fast CI runners. The browser
 workflow covers both the default 20 ms and a longer 200 ms settle delay.
+
+The Windows launcher explicitly selects `Ubuntu-22.04`, configurable through the
+Windows `GYM_WSL_DISTRO` environment variable. Relying on WSL's default can launch
+Docker's distribution instead of the environment with Python and uv. The Desktop
+launcher calls the project launcher, so fixes apply to both entry points.

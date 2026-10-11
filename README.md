@@ -61,6 +61,8 @@ uv run --env-file .env gym-web
 Open **http://127.0.0.1:8010**. On Windows with WSL, double-click
 **Start Gym Workouts.bat** after setup; it loads `.env` and opens the default port.
 Keep its server window open. Do not share a `.venv` between Windows and WSL Python.
+The launcher selects `Ubuntu-22.04`; set the Windows environment variable
+`GYM_WSL_DISTRO` to use a different distribution where you installed the app.
 For a custom port, use the command-line launch and open its printed URL.
 
 ## Record a workout

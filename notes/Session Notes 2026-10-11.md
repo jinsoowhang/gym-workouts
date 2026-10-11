@@ -61,3 +61,17 @@ with the longer delay retained after reload. The complete check script passed
 Ruff, compilation, dbt debug/parse/seed/build (eight models and 35 data tests),
 SQLFluff, and the public-file policy. The CI correction is limited to test
 synchronization and these project notes.
+
+## Desktop launcher correction
+
+The Desktop launcher called the project batch file correctly, but WSL's default
+distribution was Docker's environment. The project batch file now explicitly
+selects `Ubuntu-22.04`, with a `GYM_WSL_DISTRO` override for other installations.
+README setup instructions document this choice. The Desktop entry continues to
+call the project launcher, so it receives the fix automatically.
+
+Verification: launched the actual Desktop batch file from Windows with the old
+test server stopped, then confirmed the application health response and homepage
+HTTP 200 using Windows PowerShell. Left the launched server running for use.
+Shell syntax, whitespace, and public-file policy checks passed. No workout or
+analytics actions were performed during launcher verification.
