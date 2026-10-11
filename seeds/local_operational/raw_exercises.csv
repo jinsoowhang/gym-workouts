@@ -1,0 +1,9 @@
+id,name,measurement_type,snapshot_id,extracted_at
+ex-squat,synthetic squat,weight_reps,synthetic_old,2026-09-01 12:00:00+00:00
+ex-curl,synthetic curl,weight_reps,synthetic_old,2026-09-01 12:00:00+00:00
+ex-core,synthetic core,weight_reps,synthetic_old,2026-09-01 12:00:00+00:00
+ex-therapy,physical therapy,activity,synthetic_old,2026-09-01 12:00:00+00:00
+ex-squat,synthetic squat,weight_reps,synthetic_current,2026-09-02 12:00:00+00:00
+ex-curl,synthetic curl,weight_reps,synthetic_current,2026-09-02 12:00:00+00:00
+ex-core,synthetic core,weight_reps,synthetic_current,2026-09-02 12:00:00+00:00
+ex-therapy,physical therapy,activity,synthetic_current,2026-09-02 12:00:00+00:00

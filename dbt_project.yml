@@ -1,0 +1,26 @@
+name: gym_workouts
+version: 1.0.0
+config-version: 2
+profile: gym_workouts
+model-paths: [models]
+analysis-paths: [analyses]
+test-paths: [tests/dbt]
+seed-paths: [seeds]
+macro-paths: [macros]
+clean-targets: [target, dbt_packages, logs]
+models:
+  gym_workouts:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+seeds:
+  gym_workouts:
+    local_operational:
+      +schema: raw
+      +enabled: "{{ env_var('GYM_USE_SYNTHETIC', 'true') == 'true' }}"

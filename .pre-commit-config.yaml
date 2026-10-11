@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: Python lint
+        entry: uv run ruff check
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: Python format
+        entry: uv run ruff format --check
+        language: system
+        types: [python]
+      - id: public-files
+        name: Private-file exclusion
+        entry: uv run python scripts/check_public_files.py
+        language: system
+        pass_filenames: false
+        always_run: true

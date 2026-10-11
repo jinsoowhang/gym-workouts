@@ -1,0 +1,56 @@
+<section id="workout" class="workout-shell">
+  <div class="page-intro">
+    <div><p class="eyebrow">YOUR TRAINING, IN FOCUS</p><h1>{% if session %}Workout {{ session.routine }}{% else %}Ready for your next session.{% endif %}</h1>
+    <p class="intro-copy">{% if session and session.status == 'draft' %}Your usual numbers are here. Make today your own.{% elif session and session.status == 'completed' %}Another session in the books. Here’s what you recorded.{% elif session %}Your results are safe. Let’s finish saving them.{% else %}A familiar routine. A fresh start. Everything ready to go.{% endif %}</p></div>
+    <div class="date-block"><span class="eyebrow">{% if session %}SESSION DATE{% else %}TODAY{% endif %}</span><strong>{{ session.date if session else today }}</strong><span>Weight unit: lb</span></div>
+  </div>
+  {% if review %}<div class="notice">{{ review|length }} imported note(s) need completion review. <a href="/history">Review history</a></div>{% endif %}
+  {% if not ready %}
+    <div class="empty-state"><h2>Your routines are almost ready.</h2><p>Initialize your workout imports using the setup steps in the project README, then reload this page.</p></div>
+  {% elif not session %}
+    <div class="start-panel"><div class="routine-letter" aria-hidden="true">{{ suggested }}</div><div><p class="eyebrow">UP NEXT</p><h2>Workout {{ suggested }}</h2><p>{% if last %}Last completed: Workout {{ last.routine }} on {{ last.date }}.{% else %}Your first session starts with Workout A.{% endif %}</p><p class="muted">Defaults from your last session, with room to adjust.</p></div>
+    <form action="/start" method="post" hx-post="/start" hx-target="#workout" hx-swap="outerHTML">
+      <label for="routine">Today’s routine</label><select id="routine" name="routine"><option value="A" {% if suggested == 'A' %}selected{% endif %}>Workout A</option><option value="B" {% if suggested == 'B' %}selected{% endif %}>Workout B</option></select><button class="primary" type="submit">Start workout <span aria-hidden="true">↗</span></button>
+    </form></div>
+  {% else %}
+    {% set editable = session.status == 'draft' %}
+    <div class="session-bar"><div><span class="pill {% if session.status == 'completed' %}complete{% endif %}">{{ 'Completed' if session.status == 'completed' else 'Saving to Obsidian' if session.status == 'finalizing' else 'In progress' }}</span><span class="session-detail" id="progress-summary">{{ done }} / {{ total }} sets & activities done</span></div><span class="muted">{% if session.vault_saved %}Saved to Obsidian{% elif session.status == 'completed' %}Imported from Obsidian{% else %}Core + physical therapy included{% endif %}</span></div>
+    <form id="session-form" action="/sessions/{{ session.id }}/command" method="post" hx-post="/sessions/{{ session.id }}/command" hx-trigger="input delay:400ms, submit" hx-target="#save-status" hx-swap="innerHTML" hx-sync="this:queue all">
+      <input type="hidden" id="revision" name="revision" value="{{ session.revision }}">
+      <div class="session-layout"><div class="exercise-grid">
+      {% for group in groups %}
+        <section class="exercise-card" aria-label="{{ group.title }}">
+          <header class="card-header"><div><span class="exercise-index">{{ '%02d'|format(loop.index) }}</span><h2>{{ group.title }}</h2></div>
+          {% if editable and group.exercises|length == 1 %}{% set exercise = group.exercises[0] %}
+          <button class="icon-button {{ 'undo' if exercise.removed else '' }}" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ 'Undo' if exercise.removed else '×' }}</button>{% endif %}</header>
+          {% if group.exercises|length > 1 and editable %}<div class="exercise-controls">{% for exercise in group.exercises %}<button class="text-button" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ exercise.name }} <span>{{ 'Undo' if exercise.removed else '×' }}</span></button>{% endfor %}</div>{% endif %}
+          <p class="card-source">{{ group.source_summary }}{% if group.rows[0].type == 'activity' %} · Optional notes below{% endif %}</p>
+          {% if group.rows[0].type == 'weight_reps' %}<div class="set-header"><span>SET</span><span>DEFAULT</span><span>LB</span><span>REPS</span><span>STATUS</span></div>{% endif %}
+          {% for row in group.rows %}
+          <div class="set-row {{ 'removed' if row.state == 'removed' else '' }} {{ 'activity-row' if row.type == 'activity' else '' }}">
+            {% if row.state == 'removed' %}<div class="removed-label">{{ row.name|title }} removed for this session</div>{% endif %}
+            {% if group.exercises|length > 1 %}<div class="arm-label">{{ row.name|title }}</div>{% endif %}
+            {% if row.type == 'weight_reps' %}
+              <span class="set-number">{{ row.occurrence }}</span><span class="default-value" title="{{ row.default_source }}">{{ row.default_weight }} <span>×</span> {{ row.default_reps }}</span>
+              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} weight in lb" name="weight_{{ row.id }}" type="number" min="0" max="99999999" step="0.0001" value="{{ row.weight }}" {% if not editable %}readonly{% endif %} required>
+              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} reps" name="reps_{{ row.id }}" type="number" min="0" max="1000000" step="1" value="{{ row.reps }}" {% if not editable %}readonly{% endif %} required>
+            {% else %}<span class="activity-description">A little care goes a long way.</span>{% endif %}
+            {% if editable and row.state != 'removed' %}<select class="set-state" name="state_{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} status"><option value="pending" {% if row.state == 'pending' %}selected{% endif %}>To do</option><option value="performed" {% if row.state == 'performed' %}selected{% endif %}>Done</option><option value="skipped" {% if row.state == 'skipped' %}selected{% endif %}>Skip</option></select>
+            {% else %}<input type="hidden" name="state_{{ row.id }}" value="{{ row.state }}"><span class="read-status">{{ 'Done' if row.state == 'performed' else 'Not specified' if row.state == 'unknown' else row.state|title }}</span>{% endif %}
+          </div>
+          {% endfor %}
+        </section>
+      {% endfor %}
+      </div><aside class="session-sidebar">
+        <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2><p>Adjust your numbers as you go, then mark each set done or skipped.</p>
+        <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Any physical therapy notes?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
+        <div id="save-status" role="status" aria-live="polite">{% if session.status == 'completed' %}<span class="saved">Session complete{% if session.vault_saved %} · Saved to Obsidian{% endif %}</span>{% elif session.status == 'finalizing' %}<span class="save-error">{{ session.error or 'Save is pending. Retry to finish.' }}</span>{% else %}<span class="saved">Draft saved</span>{% endif %}</div>
+        {% if editable %}<button type="submit" name="action" value="mark-all" class="secondary mark-all">Mark remaining done</button><button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="discard" class="text-button discard" formnovalidate>Discard this draft</button>
+        {% elif session.status == 'finalizing' %}<button type="submit" name="action" value="retry" class="primary finish" formnovalidate>Retry Obsidian save</button><p class="helper">Your results are retained until the note is saved.</p>
+        {% else %}<p class="helper">Your next workout is {{ suggested }}.</p>{% endif %}
+        </div>
+      </aside></div>
+    </form>
+    {% if session.status == 'completed' %}<form class="next-session" action="/start" method="post" hx-post="/start" hx-target="#workout" hx-swap="outerHTML"><input type="hidden" name="routine" value="{{ suggested }}"><span>Ready for the next session?</span><button class="secondary" type="submit">Start Workout {{ suggested }} <span aria-hidden="true">→</span></button></form>{% endif %}
+  {% endif %}
+</section>

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}History · Gym Workouts{% endblock %}
+{% block content %}
+<section class="history-page"><p class="eyebrow">THE WORK YOU’VE PUT IN</p><h1>Your training history.</h1><p class="intro-copy">Every session, a little more to build on.</p>
+<div class="history-list">{% for record in records %}<article class="history-row"><span class="history-letter">{{ record.routine }}</span><div><h2><a href="/workouts/{{ record.id }}">Workout {{ record.routine }}</a></h2><span class="muted">{{ record.session_date }}</span></div><span class="pill {{ 'complete' if record.status == 'completed' else '' }}">{{ 'Completed' if record.status == 'completed' else 'Needs review' }}</span>{% if record.status == 'review' %}<form action="/review/{{ record.id }}" method="post"><button class="secondary" type="submit">Confirm completed</button></form>{% else %}<a class="history-link" href="/workouts/{{ record.id }}">View session <span aria-hidden="true">↗</span></a>{% endif %}</article>{% else %}<p>No recorded sessions yet. <a href="/">Start a workout</a>.</p>{% endfor %}</div></section>
+{% endblock %}

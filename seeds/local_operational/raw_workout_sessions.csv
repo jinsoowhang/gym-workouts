@@ -1,0 +1,11 @@
+id,routine,session_date,status,revision,notes,created_at,completed_at,source_path,snapshot_id,extracted_at
+completed-a,A,2026-08-28,completed,1,Invented example,2026-08-28T12:00:00+00:00,2026-08-30T12:00:00+00:00,synthetic/completed-a.md,synthetic_old,2026-09-01 12:00:00+00:00
+completed-b,B,2026-08-30,completed,1,Invented example,2026-08-28T12:00:00+00:00,2026-08-30T12:00:00+00:00,synthetic/completed-b.md,synthetic_old,2026-09-01 12:00:00+00:00
+draft-a,A,2026-08-28,draft,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/draft-a.md,synthetic_old,2026-09-01 12:00:00+00:00
+finalizing-b,B,2026-08-30,finalizing,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/finalizing-b.md,synthetic_old,2026-09-01 12:00:00+00:00
+review-a,A,2026-08-28,review,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/review-a.md,synthetic_old,2026-09-01 12:00:00+00:00
+completed-a,A,2026-08-28,completed,1,Invented example,2026-08-28T12:00:00+00:00,2026-08-30T12:00:00+00:00,synthetic/completed-a.md,synthetic_current,2026-09-02 12:00:00+00:00
+completed-b,B,2026-08-30,completed,1,Invented example,2026-08-28T12:00:00+00:00,2026-08-30T12:00:00+00:00,synthetic/completed-b.md,synthetic_current,2026-09-02 12:00:00+00:00
+draft-a,A,2026-08-28,draft,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/draft-a.md,synthetic_current,2026-09-02 12:00:00+00:00
+finalizing-b,B,2026-08-30,finalizing,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/finalizing-b.md,synthetic_current,2026-09-02 12:00:00+00:00
+review-a,A,2026-08-28,review,1,Invented example,2026-08-28T12:00:00+00:00,,synthetic/review-a.md,synthetic_current,2026-09-02 12:00:00+00:00

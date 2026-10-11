@@ -1,0 +1,3 @@
+snapshot_id,extracted_at,schema_version,row_counts
+synthetic_old,2026-09-01 12:00:00+00:00,c6faee5e31e0,{}
+synthetic_current,2026-09-02 12:00:00+00:00,c6faee5e31e0,{}

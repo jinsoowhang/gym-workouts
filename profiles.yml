@@ -1,0 +1,8 @@
+gym_workouts:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('GYM_DBT_DATABASE_PATH', 'data/warehouse/gym_ci.duckdb') }}"
+      schema: gym
+      threads: 2

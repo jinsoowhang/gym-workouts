@@ -1,0 +1,124 @@
+version: 2
+
+sources:
+  - name: operational
+    description: >-
+      Consistent SQLite snapshots, with a manifest published last. Local CI uses
+      explicitly invented fixtures; private loads remain in ignored warehouse files.
+    schema: gym_raw
+    tables:
+      - name: raw_snapshot_manifest
+        description: One row per completely published content-addressed snapshot.
+        columns:
+          - name: snapshot_id
+            data_tests: [unique, not_null]
+      - name: raw_exercises
+        description: One exercise identity per snapshot, with measurement type.
+      - name: raw_workout_sessions
+        description: One operational session per snapshot, including draft/save states.
+      - name: raw_workout_sets
+        description: One ordered planned or recorded set/activity per snapshot.
+
+models:
+  - name: stg_operational__workout_sessions
+    description: One session from the latest complete snapshot; local session dates are preserved.
+    columns:
+      - name: session_id
+        data_tests: [unique, not_null]
+      - name: routine
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [A, B]
+      - name: session_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [draft, finalizing, completed, discarded, review]
+      - name: session_date
+        data_tests: [not_null]
+  - name: stg_operational__workout_sets
+    description: One set/activity instance from the latest complete snapshot, including removed rows.
+    columns:
+      - name: set_id
+        data_tests: [unique, not_null]
+      - name: session_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_operational__workout_sessions')
+                field: session_id
+      - name: exercise_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_operational__exercises')
+                field: exercise_id
+      - name: set_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [pending, performed, skipped, removed, unknown]
+  - name: stg_operational__exercises
+    description: One exercise identity from the latest complete snapshot.
+    columns:
+      - name: exercise_id
+        data_tests: [unique, not_null]
+      - name: measurement_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [weight_reps, activity]
+  - name: int_completed_workout_sets
+    description: One performed numeric set from a completed session; skips, removals, and activities excluded.
+    columns:
+      - name: set_id
+        data_tests: [unique, not_null]
+  - name: int_session_exercise_metrics
+    description: One completed session × exercise, aggregating numeric performed sets only.
+  - name: dim_exercises
+    description: One exercise/activity identity, including nonnumeric physical therapy.
+    columns:
+      - name: exercise_id
+        data_tests: [unique, not_null]
+  - name: fct_workout_sets
+    description: >-
+      One performed numeric set from a completed session. Recorded load-volume is
+      supplied external lb × reps; zero-load core work does not quantify bodyweight effort.
+    columns:
+      - name: template_key
+        description: Known planned-set identity; null for ambiguous legacy correspondence.
+      - name: session_position
+        description: Legacy recorded order, or app planned order including skipped/removed gaps.
+      - name: set_id
+        data_tests: [unique, not_null]
+      - name: session_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fct_workout_sessions')
+                field: session_id
+      - name: exercise_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_exercises')
+                field: exercise_id
+      - name: weight_lb
+        description: Recorded external weight in pounds, preserved to four decimal places.
+        data_tests: [not_null]
+      - name: reps
+        data_tests: [not_null]
+      - name: recorded_load_volume_lb
+        description: External weight_lb × performed reps; not an estimate of total effort.
+  - name: fct_workout_sessions
+    description: >-
+      One completed session, including activity-only sessions with zero numeric totals.
+      Unfinished Obsidian publications are excluded. No duration or adherence inferred.
+    columns:
+      - name: session_id
+        data_tests: [unique, not_null]
+      - name: session_date
+        data_tests: [not_null]

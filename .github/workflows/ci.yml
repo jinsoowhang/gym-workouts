@@ -1,0 +1,20 @@
+name: checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  local-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+      - name: Install Python and locked dependencies
+        run: uv sync --locked --all-groups
+      - name: Install browser for UI verification
+        run: uv run playwright install --with-deps chromium
+      - name: Check Python, browser workflow, SQL, and data contracts
+        env:
+          GYM_BROWSER_TESTS: "1"
+        run: bash scripts/check.sh

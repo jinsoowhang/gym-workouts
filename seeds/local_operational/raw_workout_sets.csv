@@ -1,0 +1,19 @@
+id,session_id,exercise_id,template_key,position,occurrence,weight,reps,default_weight,default_reps,state,previous_state,default_source,snapshot_id,extracted_at
+set-1,completed-a,ex-squat,A:ex-squat:1,0,1,11.25,5,11.25,5,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-2,completed-a,ex-curl,A:ex-curl:1,1,1,90,6,90,6,removed,pending,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-3,completed-a,ex-core,A:ex-core:1,2,1,0,12,0,12,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-4,completed-a,ex-therapy,A:ex-therapy:1,3,1,,,,,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-5,completed-b,ex-therapy,A:ex-therapy:1,0,1,,,,,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-6,draft-a,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-7,finalizing-b,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-8,review-a,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-9,completed-a,ex-curl,A:ex-curl:1,4,1,20,2,20,2,skipped,,Invented fixture,synthetic_old,2026-09-01 12:00:00+00:00
+set-1,completed-a,ex-squat,A:ex-squat:1,0,1,30.25,5,30.25,5,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-2,completed-a,ex-curl,A:ex-curl:1,1,1,90,6,90,6,removed,pending,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-3,completed-a,ex-core,A:ex-core:1,2,1,0,12,0,12,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-4,completed-a,ex-therapy,A:ex-therapy:1,3,1,,,,,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-5,completed-b,ex-therapy,A:ex-therapy:1,0,1,,,,,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-6,draft-a,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-7,finalizing-b,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-8,review-a,ex-squat,A:ex-squat:1,0,1,70,5,70,5,performed,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
+set-9,completed-a,ex-curl,A:ex-curl:1,4,1,20,2,20,2,skipped,,Invented fixture,synthetic_current,2026-09-02 12:00:00+00:00
