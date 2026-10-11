@@ -42,3 +42,6 @@ See README and `docs/hosted-analytics-roadmap.md` for setup and remaining milest
 Independent clone audit passed: clean reachable history, no private runtime files
 or known personal identifiers, and no secrets found by Gitleaks. GitHub publication
 and the profile placement are authorized; machine data remains local.
+
+GitHub CI pins setup-uv to the verified official v10.3.0 commit. The initial
+workflow referenced an unavailable v9 major tag and failed before running checks.

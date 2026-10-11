@@ -35,3 +35,11 @@ known-private-identifier checks, and Gitleaks across all reachable history. The
 initial public commit has no private parent; commit metadata uses GitHub noreply.
 Private configuration, runtime data, source docs, and history backup remain ignored.
 The profile README change is scoped to one entry directly after `fc-clubs`.
+
+## Hosted CI correction
+
+GitHub's first runs failed during action resolution: `astral-sh/setup-uv@v9`
+does not exist. Verified the current official release and action inputs through
+the GitHub API, then pinned the action to the v10.3.0 commit. The application and
+dependency lock are unchanged. YAML validation and public-file checks passed;
+the corrected workflow runs the previously passing local suite on GitHub.
