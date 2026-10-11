@@ -101,3 +101,23 @@ Google Web OAuth client were not available; no connected Cloudflare plugin was
 found. The allowed Gmail address and account setup path were requested. Keep
 local recording active until these are supplied, then stop it, take a final
 SQLite backup, and complete cutover and authenticated browser checks.
+
+## Login allowlist and publication privacy audit
+
+Received the approved login address and saved it only in ignored deployment
+metadata, an ignored Access policy payload, and private VPS environment settings.
+The payload requires the selected Google identity provider as well as the approved
+email. Google/Cloudflare account configuration and public cutover remain pending.
+
+Audited an independent clone of the published repository: all six reachable
+commits and 106 distinct file versions have no private login address, VPS address,
+or deployed hostname. Commit metadata contains no private login address. Gitleaks
+8.30.1, verified against its official release digest, found no secrets in the
+complete published history or current tracked files. All privacy reports and
+database snapshots remain ignored. The existing public-file policy also passed.
+
+Expanded credential exclusions to Google client JSON and token JSON files. The
+public-file check now rejects those files even if already staged and rejects
+personal email addresses in publishable content. Four scoped regression cases
+cover a generic example contact, a synthetic personal contact, and force-staged
+credential files. These checks passed, along with Ruff and whitespace validation.

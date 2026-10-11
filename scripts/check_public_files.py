@@ -37,6 +37,10 @@ machine_path = re.compile(
     r"(?:/mnt/[a-z]/Users/|[A-Za-z]:\\Users\\|/home/|/Users/)[A-Za-z0-9_.-]+[/\\]",
     re.IGNORECASE,
 )
+personal_email = re.compile(
+    r"[A-Za-z0-9._%+-]+@(?:gmail|googlemail|outlook|hotmail|yahoo|icloud)\.com\b",
+    re.IGNORECASE,
+)
 
 for path in candidates:
     name = path.name.lower()
@@ -49,7 +53,7 @@ for path in candidates:
     private_location = path.parts[0] in private_roots and not runtime_readme
     private_environment = name.startswith(".env") and name != ".env.example"
     private_credential = (
-        name.startswith("credentials") or "service-account" in name
+        name.startswith(("credentials", "client_secret", "token")) or "service-account" in name
     ) and path.suffix.lower() == ".json"
     database_sidecar = any(ext in name for ext in (".sqlite3-", ".duckdb.", ".db-"))
     if (
@@ -65,4 +69,6 @@ for path in candidates:
         content = (ROOT / path).read_bytes().decode("utf-8", errors="replace")
         if machine_path.search(content):
             raise SystemExit(f"Machine-specific home path must not be published: {path}")
+        if personal_email.search(content):
+            raise SystemExit(f"Personal email address must remain in private settings: {path}")
 print("Public-file policy passed; runtime state and machine settings stay local.")

@@ -27,6 +27,8 @@ are separate; never seed the private warehouse. Run `bash scripts/check.sh`.
 
 - Public code and documentation contain no real workout history or machine paths.
 - Tests/seeds are invented. Runtime files, local settings, reports, and backups are ignored.
+- Personal email addresses and OAuth credential files are rejected by the public-file
+  check, including files already staged. Private allowlists stay in ignored settings.
 - Configure a checkout using `.env.example`; launch with `uv run --env-file .env gym-web`.
   The Windows/WSL launcher automatically loads local `.env` when present.
 - Initial publication uses clean history and GitHub's noreply commit identity.
@@ -66,9 +68,13 @@ requests. Google authentication belongs in Cloudflare Access with a specific
 email allowlist; Desktop Google OAuth credentials cannot supply web sign-in.
 
 A private VPS staging instance is running. The existing Syncthing vault includes
-the workout folder and can sync completed notes back to the PC. Public routing,
-Google provider configuration, the user's allowed Gmail address, and final
-database cutover remain pending. Private deployment details are recorded in the
+the workout folder and can sync completed notes back to the PC. The approved Gmail
+address is saved only in private settings. Public routing, Google provider
+configuration, and final database cutover remain pending. Deployment details are recorded in the
 ignored `.secrets/vps-deployment-status.json`; see `docs/vps-deployment.md` for
 the portable setup. Stop the local recorder and take a final consistent SQLite
 backup before switching active recording to the VPS. Never sync live SQLite.
+
+The published VPS changes passed an independent GitHub clone audit of all six
+reachable commits and 106 distinct file versions: no private deployment identifiers,
+no secrets found by Gitleaks, and no private login address in commit metadata.
