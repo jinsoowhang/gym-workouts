@@ -31,10 +31,14 @@ are separate; never seed the private warehouse. Run `bash scripts/check.sh`.
   The Windows/WSL launcher automatically loads local `.env` when present.
 - Initial publication uses clean history and GitHub's noreply commit identity.
 - Original private documentation/history is retained only in an ignored local backup.
-- Repository: `https://github.com/jinsoowhang/gym-workouts` (public publication target).
+- Repository: `https://github.com/jinsoowhang/gym-workouts` (public).
 - GitHub profile entry belongs immediately after `fc-clubs` in Current Projects.
 - Publication checks passed for Python/browser workflows, portable configuration,
   all eight dbt models and 35 data tests, linting, and private-file policy.
   Gitleaks found no secrets in the audited code.
 
 See README and `docs/hosted-analytics-roadmap.md` for setup and remaining milestones.
+
+Independent clone audit passed: clean reachable history, no private runtime files
+or known personal identifiers, and no secrets found by Gitleaks. GitHub publication
+and the profile placement are authorized; machine data remains local.

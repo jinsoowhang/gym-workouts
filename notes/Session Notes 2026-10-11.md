@@ -27,3 +27,11 @@ after `fc-clubs`. Audit source, fixtures, docs, runtime exclusions, and Git hist
 Publication target: https://github.com/jinsoowhang/gym-workouts . Only clean,
 sanitized history is publishable; original private history stays in a local backup.
 A clean-history scan and independent clone audit gate the initial push.
+
+## Publication verification
+
+Published the public repository after an independent clone passed the file policy,
+known-private-identifier checks, and Gitleaks across all reachable history. The
+initial public commit has no private parent; commit metadata uses GitHub noreply.
+Private configuration, runtime data, source docs, and history backup remain ignored.
+The profile README change is scoped to one entry directly after `fc-clubs`.
