@@ -1,12 +1,15 @@
 import re
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from decimal import Decimal
 
 import pytest
 from conftest import edits, form_values
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from sqlalchemy import func, select
 
+from gym_workouts.app import create_app
 from gym_workouts.cli import migrate
 from gym_workouts.config import Settings
 from gym_workouts.contracts import SessionCommand, parse_note
@@ -329,6 +332,32 @@ def test_api_html_save_and_local_boundary(client):
     )
     assert client.get("/", headers={"Host": "other.example"}).status_code == 400
     assert client.get("/api/v1/sessions/missing").status_code == 404
+
+
+def test_hosted_https_requests_keep_host_and_origin_boundaries(configured):
+    settings, _factory, _service = configured
+    app = create_app(replace(settings, allowed_hosts=("gym.example.com", "127.0.0.1")))
+    with TestClient(app, base_url="https://gym.example.com") as hosted:
+        assert hosted.get("/").status_code == 200
+        assert hosted.get("/", headers={"Host": "other.example.com"}).status_code == 400
+        assert (
+            hosted.post(
+                "/api/v1/sessions", json={}, headers={"Origin": "https://other.example.com"}
+            ).status_code
+            == 403
+        )
+        assert (
+            hosted.post(
+                "/api/v1/sessions", json={}, headers={"Origin": "http://gym.example.com"}
+            ).status_code
+            == 403
+        )
+        assert (
+            hosted.post(
+                "/api/v1/sessions", json={}, headers={"Origin": "https://gym.example.com"}
+            ).status_code
+            == 200
+        )
 
 
 def test_unmarked_historical_import_requires_explicit_cutoff(configured):

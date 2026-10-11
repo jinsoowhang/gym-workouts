@@ -55,3 +55,20 @@ The Windows launcher explicitly selects `Ubuntu-22.04`, configurable through the
 Windows `GYM_WSL_DISTRO` environment variable. Relying on WSL's default can launch
 Docker's distribution instead of the environment with Python and uv. The Desktop
 launcher calls the project launcher, so fixes apply to both entry points.
+
+## VPS hosting
+
+`deploy/compose.yml` runs the app in Docker on host loopback with persistent
+SQLite and a mounted, synced workout folder. `GYM_ALLOWED_HOSTS` accepts only
+explicit hostnames; local defaults and mutation-origin checks remain active.
+The optional Cloudflare Tunnel connector validates Access JWTs before forwarding
+requests. Google authentication belongs in Cloudflare Access with a specific
+email allowlist; Desktop Google OAuth credentials cannot supply web sign-in.
+
+A private VPS staging instance is running. The existing Syncthing vault includes
+the workout folder and can sync completed notes back to the PC. Public routing,
+Google provider configuration, the user's allowed Gmail address, and final
+database cutover remain pending. Private deployment details are recorded in the
+ignored `.secrets/vps-deployment-status.json`; see `docs/vps-deployment.md` for
+the portable setup. Stop the local recorder and take a final consistent SQLite
+backup before switching active recording to the VPS. Never sync live SQLite.

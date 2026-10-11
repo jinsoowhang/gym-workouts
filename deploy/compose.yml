@@ -1,0 +1,33 @@
+name: gym-workouts
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: gym-workouts:local
+    restart: unless-stopped
+    # The app stays on loopback, reachable by the host's cloudflared connector.
+    network_mode: host
+    user: "${GYM_UID:-10001}:${GYM_GID:-10001}"
+    environment:
+      GYM_DATABASE_PATH: /state/app/gym.sqlite3
+      GYM_WAREHOUSE_PATH: /state/warehouse/gym.duckdb
+      GYM_WORKOUT_DIR: /workout
+      GYM_TIMEZONE: "${GYM_TIMEZONE:-UTC}"
+      GYM_PORT: "${GYM_PORT:-8010}"
+      GYM_ALLOWED_HOSTS: "${GYM_PUBLIC_HOST:?Set GYM_PUBLIC_HOST},127.0.0.1,localhost"
+    volumes:
+      - "${GYM_STATE_DIR:?Set GYM_STATE_DIR}:/state"
+      - "${GYM_WORKOUT_DIR:?Set GYM_WORKOUT_DIR}:/workout"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -c
+        - "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['GYM_PORT'] + '/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

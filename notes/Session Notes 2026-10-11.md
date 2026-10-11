@@ -75,3 +75,29 @@ test server stopped, then confirmed the application health response and homepage
 HTTP 200 using Windows PowerShell. Left the launched server running for use.
 Shell syntax, whitespace, and public-file policy checks passed. No workout or
 analytics actions were performed during launcher verification.
+
+## Private VPS staging and Google sign-in preparation
+
+Prepared Docker deployment with locked production dependencies, persistent
+SQLite, the existing synced workout folder, a loopback-only listener, and an
+optional Cloudflare Tunnel connector that requires validated Access tokens.
+Added explicit hosted-hostname configuration while preserving local defaults
+and same-origin mutation protection. Added deployment instructions for Google
+as the Cloudflare identity provider and an email-specific Access policy.
+
+Confirmed Ubuntu 24.04/Docker and the existing Syncthing send/receive vault on
+the VPS. Built the image there and started a private staging instance from a
+consistent SQLite backup. The synced folder has no pending files or errors.
+Private infrastructure identifiers and deployment settings remain untracked.
+
+Verification: all 41 Python/browser tests passed, including hosted HTTPS and
+origin/host rejection checks. Ruff, formatting, whitespace, public-file policy,
+Docker build, Compose validation, database integrity/table-count comparisons,
+workout-folder permissions, health, and hosted Host handling passed. The app
+port listens on loopback and cannot be reached through the VPS public address.
+
+The public login URL is not activated. Cloudflare account credentials and a
+Google Web OAuth client were not available; no connected Cloudflare plugin was
+found. The allowed Gmail address and account setup path were requested. Keep
+local recording active until these are supplied, then stop it, take a final
+SQLite backup, and complete cutover and authenticated browser checks.

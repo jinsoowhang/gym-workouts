@@ -1,0 +1,13 @@
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!alembic.ini
+!src/
+!src/**
+!migrations/
+!migrations/**
+!deploy/
+!deploy/Dockerfile
+**/__pycache__
+**/*.pyc

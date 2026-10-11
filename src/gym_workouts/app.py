@@ -71,9 +71,7 @@ def create_app(settings=None):
     app.state.service = service
     app.state.factory = factory
     app.state.engine = engine
-    app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.mount("/static", StaticFiles(directory=PACKAGE / "static"), name="static")
 
     @app.middleware("http")

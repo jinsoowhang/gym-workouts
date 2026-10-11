@@ -65,6 +65,10 @@ The launcher selects `Ubuntu-22.04`; set the Windows environment variable
 `GYM_WSL_DISTRO` to use a different distribution where you installed the app.
 For a custom port, use the command-line launch and open its printed URL.
 
+For a server that stays on while your PC is off, see
+[VPS hosting with Google sign-in](docs/vps-deployment.md). The deployment uses
+Docker, persistent storage, and Cloudflare Access with an account allowlist.
+
 ## Record a workout
 
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.

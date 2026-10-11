@@ -1,0 +1,13 @@
+# Store the populated file and tunnel credentials outside the public checkout.
+tunnel: YOUR_TUNNEL_ID
+credentials-file: /etc/cloudflared/credentials.json
+ingress:
+  - hostname: gym.example.com
+    service: http://127.0.0.1:8010
+    originRequest:
+      access:
+        required: true
+        teamName: YOUR_CLOUDFLARE_TEAM
+        audTag:
+          - YOUR_ACCESS_APPLICATION_AUDIENCE
+  - service: http_status:404
