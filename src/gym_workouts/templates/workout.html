@@ -1,3 +1,4 @@
+{% from "exercise_icons.html" import exercise_icon %}
 <section id="workout" class="workout-shell">
   <div class="page-intro">
     <div><p class="eyebrow">YOUR TRAINING, IN FOCUS</p><h1>{% if session %}Workout {{ session.routine }}{% else %}Ready for your next session.{% endif %}</h1>
@@ -14,38 +15,43 @@
     </form></div>
   {% else %}
     {% set editable = session.status == 'draft' %}
-    <div class="session-bar"><div><span class="pill {% if session.status == 'completed' %}complete{% endif %}">{{ 'Completed' if session.status == 'completed' else 'Saving to Obsidian' if session.status == 'finalizing' else 'In progress' }}</span><span class="session-detail" id="progress-summary">{{ done }} / {{ total }} sets & activities done</span></div><span class="muted">{% if session.vault_saved %}Saved to Obsidian{% elif session.status == 'completed' %}Imported from Obsidian{% else %}Core + physical therapy included{% endif %}</span></div>
+    <div class="session-bar"><div><span class="pill {% if session.status == 'completed' %}complete{% endif %}">{{ 'Completed' if session.status == 'completed' else 'Saving to Obsidian' if session.status == 'finalizing' else 'In progress' }}</span><span class="session-detail" id="progress-summary">{% if editable %}{{ total }} sets & activities included{% else %}{{ done }} sets & activities recorded{% endif %}</span></div><span class="muted">{% if session.vault_saved %}Saved to Obsidian{% elif session.status == 'completed' %}Imported from Obsidian{% else %}Core + physical therapy included{% endif %}</span></div>
     <form id="session-form" action="/sessions/{{ session.id }}/command" method="post" hx-post="/sessions/{{ session.id }}/command" hx-trigger="input delay:400ms, submit" hx-target="#save-status" hx-swap="innerHTML" hx-sync="this:queue all">
       <input type="hidden" id="revision" name="revision" value="{{ session.revision }}">
       <div class="session-layout"><div class="exercise-grid">
       {% for group in groups %}
         <section class="exercise-card" aria-label="{{ group.title }}">
-          <header class="card-header"><div><span class="exercise-index">{{ '%02d'|format(loop.index) }}</span><h2>{{ group.title }}</h2></div>
+          <header class="card-header"><div>{{ exercise_icon(group.title) }}<h2>{{ group.title }}</h2></div>
           {% if editable and group.exercises|length == 1 %}{% set exercise = group.exercises[0] %}
           <button class="icon-button {{ 'undo' if exercise.removed else '' }}" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ 'Undo' if exercise.removed else '×' }}</button>{% endif %}</header>
           {% if group.exercises|length > 1 and editable %}<div class="exercise-controls">{% for exercise in group.exercises %}<button class="text-button" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ exercise.name }} <span>{{ 'Undo' if exercise.removed else '×' }}</span></button>{% endfor %}</div>{% endif %}
-          <p class="card-source">{{ group.source_summary }}{% if group.rows[0].type == 'activity' %} · Optional notes below{% endif %}</p>
-          {% if group.rows[0].type == 'weight_reps' %}<div class="set-header"><span>SET</span><span>DEFAULT</span><span>LB</span><span>REPS</span><span>STATUS</span></div>{% endif %}
+          <p class="card-source">{{ group.source_summary }}{% if group.rows[0].type == 'activity' %} · Each row is one muscle / area{% endif %}</p>
+          {% if group.rows[0].type == 'weight_reps' %}<div class="set-header"><span>SET</span><span>DEFAULT</span><span>LB</span><span>REPS</span><span aria-hidden="true"></span></div>{% else %}<div class="therapy-header">MUSCLE / AREA</div>{% endif %}
           {% for row in group.rows %}
           <div class="set-row {{ 'removed' if row.state == 'removed' else '' }} {{ 'activity-row' if row.type == 'activity' else '' }}">
-            {% if row.state == 'removed' %}<div class="removed-label">{{ row.name|title }} removed for this session</div>{% endif %}
+            {% if row.state == 'removed' %}<div class="removed-label">{% if row.type == 'weight_reps' %}Set {{ row.occurrence }}{% else %}{{ row.activity_area or 'Area ' ~ row.occurrence }}{% endif %} removed for this session</div>{% endif %}
             {% if group.exercises|length > 1 %}<div class="arm-label">{{ row.name|title }}</div>{% endif %}
             {% if row.type == 'weight_reps' %}
               <span class="set-number">{{ row.occurrence }}</span><span class="default-value" title="{{ row.default_source }}">{{ row.default_weight }} <span>×</span> {{ row.default_reps }}</span>
-              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} weight in lb" name="weight_{{ row.id }}" type="number" min="0" max="99999999" step="0.0001" value="{{ row.weight }}" {% if not editable %}readonly{% endif %} required>
-              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} reps" name="reps_{{ row.id }}" type="number" min="0" max="1000000" step="1" value="{{ row.reps }}" {% if not editable %}readonly{% endif %} required>
-            {% else %}<span class="activity-description">A little care goes a long way.</span>{% endif %}
-            {% if editable and row.state != 'removed' %}<select class="set-state" name="state_{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} status"><option value="pending" {% if row.state == 'pending' %}selected{% endif %}>To do</option><option value="performed" {% if row.state == 'performed' %}selected{% endif %}>Done</option><option value="skipped" {% if row.state == 'skipped' %}selected{% endif %}>Skip</option></select>
-            {% else %}<input type="hidden" name="state_{{ row.id }}" value="{{ row.state }}"><span class="read-status">{{ 'Done' if row.state == 'performed' else 'Not specified' if row.state == 'unknown' else row.state|title }}</span>{% endif %}
+              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} weight in lb" name="weight_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'number' }}" min="0" max="99999999" step="0.0001" value="{{ row.weight }}" {% if not editable %}readonly{% endif %} required>
+              <input aria-label="{{ row.name|title }} set {{ row.occurrence }} reps" name="reps_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'number' }}" min="0" max="1000000" step="1" value="{{ row.reps }}" {% if not editable %}readonly{% endif %} required>
+            {% else %}
+              <span class="set-number">{{ row.occurrence }}</span>
+              <input aria-label="Physical Therapy area {{ row.occurrence }}" name="area_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'text' }}" maxlength="500" value="{{ row.activity_area }}" placeholder="Muscle / area" {% if not editable %}readonly{% endif %}>
+            {% endif %}
+            <input type="hidden" name="state_{{ row.id }}" value="{{ row.state }}">
+            {% if editable %}<button class="icon-button set-action {{ 'undo' if row.state == 'removed' else '' }}" type="submit" name="action" value="{{ 'restore-set:' if row.state == 'removed' else 'remove-set:' }}{{ row.id }}" aria-label="{{ 'Restore' if row.state == 'removed' else 'Remove' }} {{ row.name|title }} {{ 'area' if row.type == 'activity' else 'set' }} {{ row.occurrence }}">{{ 'Undo' if row.state == 'removed' else '×' }}</button>
+            {% elif row.state in ('skipped', 'unknown', 'pending') %}<span class="set-note">{{ 'Completion not specified' if row.state == 'unknown' else row.state|title }}</span>{% endif %}
           </div>
           {% endfor %}
+          {% if editable %}<div class="add-row-controls">{% for exercise in group.exercises %}<button class="text-button add-row" type="submit" name="action" value="add-set:{{ exercise.id }}" aria-label="{{ 'Add area to' if group.rows[0].type == 'activity' else 'Add set to' }} {{ exercise.name }}"><span aria-hidden="true">+</span> {{ 'Add area' if group.rows[0].type == 'activity' else 'Add ' ~ exercise.name ~ ' set' if group.exercises|length > 1 else 'Add set' }}</button>{% endfor %}</div>{% endif %}
         </section>
       {% endfor %}
       </div><aside class="session-sidebar">
-        <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2><p>Adjust your numbers as you go, then mark each set done or skipped.</p>
-        <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Any physical therapy notes?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
+        <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2><p>Adjust your numbers as you go. Use × to remove sets you didn’t do; Finish records everything remaining.</p>
+        <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Anything to remember?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
         <div id="save-status" role="status" aria-live="polite">{% if session.status == 'completed' %}<span class="saved">Session complete{% if session.vault_saved %} · Saved to Obsidian{% endif %}</span>{% elif session.status == 'finalizing' %}<span class="save-error">{{ session.error or 'Save is pending. Retry to finish.' }}</span>{% else %}<span class="saved">Draft saved</span>{% endif %}</div>
-        {% if editable %}<button type="submit" name="action" value="mark-all" class="secondary mark-all">Mark remaining done</button><button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="discard" class="text-button discard" formnovalidate>Discard this draft</button>
+        {% if editable %}<button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="discard" class="text-button discard" formnovalidate>Discard this draft</button>
         {% elif session.status == 'finalizing' %}<button type="submit" name="action" value="retry" class="primary finish" formnovalidate>Retry Obsidian save</button><p class="helper">Your results are retained until the note is saved.</p>
         {% else %}<p class="helper">Your next workout is {{ suggested }}.</p>{% endif %}
         </div>

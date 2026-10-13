@@ -18,6 +18,10 @@ def test_snapshot_is_idempotent_and_manifest_counts_match(configured):
             assert db.execute(f"SELECT count(*) FROM gym_raw.raw_{name}").fetchone()[0] == count
         columns = [r[0] for r in db.execute("DESCRIBE gym_raw.raw_source_records").fetchall()]
         assert "original_text" not in columns
+        columns = [r[0] for r in db.execute("DESCRIBE gym_raw.raw_workout_sessions").fetchall()]
+        assert "therapy_areas" not in columns
+        columns = [r[0] for r in db.execute("DESCRIBE gym_raw.raw_workout_sets").fetchall()]
+        assert "activity_area" not in columns
 
 
 def test_changed_operational_state_creates_new_complete_snapshot(configured):

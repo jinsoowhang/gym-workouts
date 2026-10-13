@@ -1,0 +1,28 @@
+{% macro exercise_icon(name) -%}
+<span class="exercise-icon" aria-hidden="true">
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+    {% if name == 'Physical Therapy' %}
+    <path d="M24 39S7 29 7 18a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 11-17 21-17 21Z"/><path d="M14 24h6l3-7 4 14 3-7h5"/>
+    {% elif 'Squat' in name %}
+    <circle cx="25" cy="10" r="4"/><path d="m25 17-4 10 11 5-4 10M21 27l-9 7 2 8M13 19h23M10 15v8m29-8v8M18 19l5-2 8 2"/>
+    {% elif 'Deadlift' in name %}
+    <circle cx="30" cy="10" r="4"/><path d="m27 17-12 9 8 7-3 9M15 26l-4 16M26 18l6 12M8 33h31M5 28v10m37-10v10"/>
+    {% elif 'Bench' in name or 'Press' in name %}
+    <circle cx="12" cy="26" r="4"/><path d="M18 29h14l4 12M24 29V16M17 13h17M14 9v8m23-8v8M7 34h27M10 34v8m20-8v8"/>
+    {% elif 'Row' in name or 'Pull' in name %}
+    <circle cx="29" cy="10" r="4"/><path d="m26 17-12 8 10 7-3 10M14 25l-4 17M25 18l7 8-9 3M21 27v7m-4-5h8"/>
+    {% elif 'Oblique' in name %}
+    <path d="m17 6-8 6 6 9-2 15 7 6h8l7-6-2-15 6-9-8-6M19 6l5 4 5-4M24 15v21M20 17h8m-9 7h10m-9 7h8"/>
+    <path d="m15 22 4 3-4 3m18-6-4 3 4 3m-18 3 4 3m14-3-4 3"/>
+    {% elif 'Leg Raise' in name %}
+    <circle cx="9" cy="32" r="4"/><path d="M16 34h13L39 12M28 34l5-22M5 41h38M18 35l-2 5"/>
+    {% elif 'Raise' in name %}
+    <circle cx="23" cy="10" r="4"/><path d="M23 17v14l-7 11M23 31l7 11M23 20h15M23 20l-10 9M37 16v8m-4-4h8M10 26l6 6"/>
+    {% elif 'Curl' in name or 'Crusher' in name or name == 'Arms' %}
+    <path d="M12 38V25l7-14 8 4-5 10 9 2 6 11H12Z"/><path d="M23 26c-7-2-9 5-5 8M17 8l13 8M15 5l-3 6m20 4-3 6"/>
+    {% else %}
+    <path d="m13 35 22-22M9 27l12 12M6 30l12 12M27 9l12 12M30 6l12 12"/>
+    {% endif %}
+  </svg>
+</span>
+{%- endmacro %}

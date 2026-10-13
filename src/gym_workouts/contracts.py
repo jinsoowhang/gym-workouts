@@ -18,6 +18,10 @@ def normalize_name(name: str) -> str:
     return " ".join(name.split()).casefold()
 
 
+def split_therapy_areas(value: str) -> list[str]:
+    return [area.strip() for area in re.split(r"[,;]", value) if area.strip()]
+
+
 def weight_value(value) -> Decimal:
     try:
         number = Decimal(str(value))
@@ -50,6 +54,7 @@ class ParsedRow:
     state: str = "performed"
     template_key: str | None = None
     previous_state: str | None = None
+    activity_area: str = ""
 
 
 @dataclass
@@ -93,7 +98,16 @@ def parse_note(text: str) -> ParsedNote:
             )
         elif normalize_name(line) == "physical therapy":
             counts["physical therapy"] += 1
-            rows.append(ParsedRow("physical therapy", None, None, len(rows), 1, state="unknown"))
+            rows.append(
+                ParsedRow(
+                    "physical therapy",
+                    None,
+                    None,
+                    len(rows),
+                    counts["physical therapy"],
+                    state="unknown",
+                )
+            )
         else:
             notes.append(line)
             issues.append(f"Line {number}: retained nonnumeric text")
@@ -128,6 +142,7 @@ def parse_note(text: str) -> ParsedNote:
                     state,
                     raw.get("template_key"),
                     raw.get("previous_state"),
+                    raw.get("activity_area", ""),
                 )
             )
         rows.sort(key=lambda row: row.position)
@@ -136,6 +151,45 @@ def parse_note(text: str) -> ParsedNote:
             raise ValueError("Note results differ from app metadata; review the external edits")
     if metadata.get("weight_unit", "lb") != "lb":
         raise ValueError("Only lb notes are supported; do not silently convert source values")
+    therapy_areas = metadata.get("therapy_areas", "")
+    if (
+        not isinstance(therapy_areas, str)
+        or (
+            len(therapy_areas) > 500
+            and not any("activity_area" in r for r in metadata.get("gym_sets", []))
+        )
+        or any(character in therapy_areas for character in ("\r", "\n"))
+    ):
+        raise ValueError("Physical therapy areas must be a single line of at most 500 characters")
+    for row in rows:
+        if (
+            not isinstance(row.activity_area, str)
+            or len(row.activity_area) > 500
+            or any(c in row.activity_area for c in ("\r", "\n"))
+        ):
+            raise ValueError("Each therapy area must be a single line of at most 500 characters")
+        if row.activity_area and row.name != "physical therapy":
+            raise ValueError("Only physical therapy rows have an area")
+    # Older app notes stored all areas on one activity. Keep their recorded state.
+    therapy = [row for row in rows if row.name == "physical therapy"]
+    if len(therapy) == 1 and not therapy[0].activity_area and therapy_areas:
+        areas = split_therapy_areas(therapy_areas)
+        if areas:
+            first = therapy[0]
+            first.activity_area = areas[0]
+            for area in areas[1:]:
+                rows.append(
+                    ParsedRow(
+                        "physical therapy",
+                        None,
+                        None,
+                        max(r.position for r in rows) + 1,
+                        max(r.occurrence for r in rows if r.name == "physical therapy") + 1,
+                        first.state,
+                        previous_state=first.previous_state,
+                        activity_area=area,
+                    )
+                )
     return ParsedNote(rows, str(metadata.get("notes", "\n".join(notes))), issues, metadata)
 
 
@@ -148,6 +202,7 @@ class SetEdit(BaseModel):
     weight: Decimal | None = None
     reps: int | None = Field(default=None, ge=0, le=1000000, strict=True)
     state: Literal["pending", "performed", "skipped", "removed", "unknown"]
+    activity_area: str | None = Field(default=None, max_length=500, pattern=r"^[^\r\n]*$")
 
     @field_validator("weight", mode="before")
     @classmethod
@@ -159,6 +214,7 @@ class SessionCommand(BaseModel):
     revision: int = Field(ge=0)
     sets: list[SetEdit] = Field(default_factory=list)
     notes: str = Field(default="", max_length=10000)
+    therapy_areas: str | None = Field(default=None, max_length=500, pattern=r"^[^\r\n]*$")
     action: str = "save"
 
 

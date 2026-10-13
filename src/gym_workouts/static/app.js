@@ -96,8 +96,3 @@ window.addEventListener("beforeunload", (event) => {
     event.returnValue = "";
   }
 });
-
-document.addEventListener("change", (event) => {
-  if (!event.target.classList.contains("set-state")) return;
-  event.target.closest(".set-row").classList.toggle("is-done", event.target.value === "performed");
-});

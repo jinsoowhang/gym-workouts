@@ -26,22 +26,27 @@ def exercise_groups(rows):
     for row in rows:
         name = row["name"]
         group_key = "Arms" if name in ("skull crusher", "bicep curl bar") else name.title()
-        if not groups or groups[-1]["title"] != group_key:
-            groups.append({"title": group_key, "rows": [], "exercises": []})
-        group = groups[-1]
+        group = next((group for group in groups if group["title"] == group_key), None)
+        if group is None:
+            group = {"title": group_key, "rows": [], "exercises": []}
+            groups.append(group)
         group["rows"].append(row)
         if not any(e["id"] == row["exercise_id"] for e in group["exercises"]):
             group["exercises"].append(
                 {
                     "id": row["exercise_id"],
                     "name": name.title(),
-                    "removed": row["state"] == "removed",
+                    "removed": all(
+                        r["state"] == "removed"
+                        for r in rows
+                        if r["exercise_id"] == row["exercise_id"]
+                    ),
                 }
             )
     for group in groups:
         sources = {row["default_source"] for row in group["rows"]}
         group["source_summary"] = group["rows"][0]["default_source"]
-        if len(sources) > 1 and "Template" in sources:
+        if len(sources) > 1 and "Template" in sources and group["source_summary"] != "Template":
             group["source_summary"] += " + template defaults"
     return groups
 
@@ -167,19 +172,25 @@ def create_app(settings=None):
                         "reps": int(form[f"reps_{row['id']}"])
                         if row["type"] == "weight_reps"
                         else None,
-                        "state": form.get(f"state_{row['id']}", row["state"]),
+                        "state": "performed"
+                        if action == "finish" and row["state"] != "removed"
+                        else form.get(f"state_{row['id']}", row["state"]),
+                        "activity_area": str(form[f"area_{row['id']}"])
+                        if f"area_{row['id']}" in form
+                        else None,
                     }
                 )
             command = SessionCommand(
                 revision=int(form["revision"]),
                 sets=edits,
                 notes=str(form.get("notes", "")),
+                therapy_areas=str(form["therapy_areas"]) if "therapy_areas" in form else None,
                 action=action,
             )
             workout = service.command(session_id, command)
         except (ValueError, ValidationError, KeyError) as exc:
             message = (
-                "Check your weight and reps; changes have not been saved."
+                "Check your weight, reps, and therapy areas; changes have not been saved."
                 if isinstance(exc, (ValidationError, KeyError))
                 else str(exc)
             )
@@ -196,7 +207,6 @@ def create_app(settings=None):
                 "receipt.html",
                 {
                     "revision": workout["revision"],
-                    "done": sum(r["state"] == "performed" for r in workout["sets"]),
                     "total": sum(r["state"] != "removed" for r in workout["sets"]),
                 },
             )

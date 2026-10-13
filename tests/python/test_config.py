@@ -26,9 +26,11 @@ def test_defaults_do_not_depend_on_a_machine_profile(monkeypatch):
 def test_local_configuration_overrides_portable_defaults(monkeypatch, tmp_path):
     monkeypatch.setenv("GYM_WORKOUT_DIR", str(tmp_path / "workout"))
     monkeypatch.setenv("GYM_TIMEZONE", "Europe/London")
+    monkeypatch.setenv("GYM_THERAPY_AREAS", "Ankle, elbow")
     settings = Settings.from_env()
     assert settings.workout_dir == tmp_path / "workout"
     assert settings.timezone == "Europe/London"
+    assert settings.therapy_areas == "Ankle, elbow"
 
 
 def test_relative_workout_directory_resolves_inside_checkout(monkeypatch):

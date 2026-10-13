@@ -10,7 +10,21 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 - A/B advances after successful completion and Markdown publication.
 - Defaults use latest completed same-routine results in lb, with template fallbacks.
 - Drafts autosave, resume, reject stale revisions, and preserve edits at Finish.
-- Exercise removal is session-only with Undo. Core and therapy return in new sessions.
+- Exercise and individual-set removal are session-only with Undo. All planned sets,
+  core, and therapy return in new sessions.
+- The web UI has no per-set status column. Finish records remaining sets/activities
+  as performed; removed rows retain their planned positions in note metadata.
+  API clients still submit explicit states. Cards use inline SVG exercise icons.
+- Physical Therapy has separate autosaving muscle/area rows (`activity_area`),
+  each with ×/Undo and an Add area button. Labels carry across routines from the
+  latest completed session, including session-only removals, with optional
+  comma-separated `GYM_THERAPY_AREAS` for initial defaults. Old combined fields are
+  converted to rows; unlabeled historical activities remain unlabeled. Labels are
+  excluded from analytics; session `therapy_areas` is a compatibility summary.
+- Add set creates a session-only numeric row using the latest included set's values.
+  Added rows have new IDs, increasing occurrence numbers, appended positions, and
+  no template key. Cards group them under their exercise; notes retain their order
+  and identity. New sessions restore the routine template's numeric set count.
 - SQLite owns lifecycle/results. Obsidian supplies imports and completed-note mirrors.
 - Durable writes recover after errors/restarts; differing existing notes are conflicts.
 - Unmarked imports require review unless an explicit historical cutoff is supplied.
@@ -91,6 +105,37 @@ no secrets found by Gitleaks, and no private login address in commit metadata.
 Local recording remains active while Google Web OAuth setup and the VPS cutover
 are pending. Keep the GitHub noreply identity and private settings out of publication.
 
-Google sign-in publication is prepared with private credentials and machine settings
-excluded. Synthetic authentication/browser verification accompanies the implementation.
-Hosted Google account setup, public routing, and database cutover remain pending.
+## Local UI testing — 2026-10-12
+
+The local database was backed up using SQLite's backup API before applying the
+login-session migration. The local app runs at `http://127.0.0.1:8010` with its
+configured workout folder and authentication disabled. Windows localhost access
+was verified and the default browser opened. Server logs and its process ID are
+stored in ignored `data/reports/local-ui-server.log` and `local-ui-server.pid`.
+
+Both desktop browser workflows passed (20 ms and 200 ms HTMX settling), along
+with 30 configuration/authentication tests. This WSL environment lacks system
+NSS/NSPR libraries; browser tests passed by exposing the existing Playwright
+Firefox libraries through `LD_LIBRARY_PATH`. A standard setup can install the
+Chromium dependencies using the README instructions. Browser tests use temporary
+workouts; no test session was recorded in the configured workout folder.
+
+The simplified recording UI passed all 68 Python/browser tests, including
+three-of-four-set recording, set Undo, reload persistence, fresh-session defaults,
+and both HTMX settling delays. Synthetic desktop/mobile previews showed no
+horizontal overflow at 1440 px and 375 px. Restart the local server after Python
+changes; refresh the browser to load updated UI assets.
+
+The therapy-area field and abdominal oblique icons passed all 73 Python/browser
+tests, Ruff, formatting, whitespace, and public-file checks. Export/import retains
+therapy text independently of session notes. A consistent backup preceded the
+therapy-area migration; initial defaults live only in ignored local settings.
+The existing draft's blank area field was prefilled without changing workout
+results. Historical therapy updates await the user's date-range choice.
+
+Separate therapy rows and extra numeric sets passed all 83 Python/browser tests,
+including live-browser additions/removal/Undo at both HTMX settle delays and
+export/import of unplanned sets. Numeric-looking area names remain compatible
+with the legacy note reader. A consistent backup preceded the row migration;
+live home/history/health and the split draft labels were verified. Synthetic
+desktop/mobile views had no horizontal overflow.

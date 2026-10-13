@@ -7,15 +7,25 @@
   `exercise name weight reps`. Exercise identity collapses whitespace and case.
 - Weight is nonnegative external **lb**, up to four decimal places; repetitions
   are nonnegative integers. A zero external load is valid, not missing data.
-- Physical therapy is an activity with explicit completion and optional notes.
+- Physical therapy is an activity with one session row per muscle/area. Each row's
+  `activity_area` is optional single-line text of at most 500 characters, with its
+  own removal/restore state. `therapy_areas` summarizes included labeled rows for
+  older API clients; older combined fields are split without inventing completion.
   Historical mention alone has unknown completion and no invented weight/reps.
+  Areas autosave, roundtrip through note metadata, and default from the latest
+  completed session or optional local configuration. Existing history is not inferred.
+  Therapy labels stay outside the analytics snapshot; numeric metrics are unchanged.
 - Workout status: draft, finalizing, completed, discarded, or review. Only
   completed sessions advance A/B and enter workout facts. Set status: pending,
   performed, skipped, removed, or unknown. Only performed numeric sets enter set facts.
 - Stable session/set IDs and planned positions preserve ordering. Full-form updates
   require the current revision and exactly the session's own set IDs. Stale updates
   are rejected; finishing includes the latest input state.
-- App-written notes retain `session_id`, completion status, lb, notes, and ordered
+- Added session rows have new IDs, appended positions, increasing exercise
+  occurrence numbers, and no template key. Numeric additions copy the latest
+  included set's weight/reps and remain session-only. Exercise cards group additions
+  with their existing exercise. Note export/import retains these unplanned rows.
+- App-written notes retain `session_id`, completion status, lb, notes, therapy areas, and ordered
   `gym_sets` mapping in YAML frontmatter. Plain result rows contain performed sets
   only. Metadata/results disagreement is an external-edit conflict.
   Completion time records the Finish action; completion status waits for note

@@ -14,7 +14,7 @@ from gym_workouts.services import WorkoutService
 
 
 @pytest.fixture
-def configured(tmp_path: Path):
+def configured(tmp_path: Path, request):
     vault = tmp_path / "workout"
     vault.mkdir()
     (vault / "_workout-a.md").write_text(
@@ -22,8 +22,10 @@ def configured(tmp_path: Path):
         "left oblique raise 0 10\nright oblique raise 0 10\n"
     )
     (vault / "_workout-b.md").write_text(
-        "deadlift 50 8\nbench press 30 8\nbench press 40 5\nfront raise 10 6\n"
-        "leg raise 0 12\nleft oblique raise 0 10\nright oblique raise 0 10\n"
+        "deadlift 50 8\nbench press 30 8\n"
+        + "bench press 40 5\n" * (getattr(request, "param", 2) - 1)
+        + "front raise 10 6\nleg raise 0 12\n"
+        "left oblique raise 0 10\nright oblique raise 0 10\n"
     )
     archive = vault / "workout-archived"
     archive.mkdir()
@@ -57,6 +59,7 @@ def edits(workout, action="save", **overrides):
         "revision": workout["revision"],
         "action": action,
         "notes": workout["notes"],
+        "therapy_areas": workout["therapy_areas"],
         "sets": [
             {key: row[key] for key in ("id", "weight", "reps", "state")} for row in workout["sets"]
         ],
@@ -66,10 +69,17 @@ def edits(workout, action="save", **overrides):
 
 
 def form_values(workout, action="save"):
-    values = {"revision": str(workout["revision"]), "notes": workout["notes"], "action": action}
+    values = {
+        "revision": str(workout["revision"]),
+        "notes": workout["notes"],
+        "therapy_areas": workout["therapy_areas"],
+        "action": action,
+    }
     for row in workout["sets"]:
         values[f"state_{row['id']}"] = row["state"]
         if row["type"] == "weight_reps":
             values[f"weight_{row['id']}"] = row["weight"]
             values[f"reps_{row['id']}"] = str(row["reps"])
+        else:
+            values[f"area_{row['id']}"] = row["activity_area"]
     return values

@@ -137,6 +137,7 @@ def import_workouts(factory, workout_dir, legacy_through=None):
                 session_date=session_date,
                 status="completed" if completed else "review",
                 notes=parsed.notes,
+                therapy_areas=parsed.metadata.get("therapy_areas", ""),
                 created_at=f"{session_date}T00:00:00",
                 completed_at=parsed.metadata.get("completed_at") if completed else None,
                 source_path=relative,
@@ -165,6 +166,7 @@ def import_workouts(factory, workout_dir, legacy_through=None):
                         default_reps=row.reps,
                         state=row.state,
                         previous_state=row.previous_state,
+                        activity_area=row.activity_area,
                         default_source=f"Imported · {session_date}",
                     )
                 )

@@ -26,8 +26,11 @@ class Settings:
     session_secret: str = field(default="", repr=False)
     google_client_id: str = field(default="", repr=False)
     google_client_secret: str = field(default="", repr=False)
+    therapy_areas: str = field(default="", repr=False)
 
     def __post_init__(self):
+        if len(self.therapy_areas) > 500 or any(c in self.therapy_areas for c in ("\r", "\n")):
+            raise ValueError("GYM_THERAPY_AREAS must be a single line of at most 500 characters")
         if self.bind_host not in ("127.0.0.1", "0.0.0.0"):
             raise ValueError("GYM_BIND_HOST must be 127.0.0.1 or 0.0.0.0")
         if not self.auth_enabled:
@@ -94,4 +97,5 @@ class Settings:
             session_secret=os.environ.get("GYM_SESSION_SECRET", ""),
             google_client_id=os.environ.get("GYM_GOOGLE_CLIENT_ID", ""),
             google_client_secret=os.environ.get("GYM_GOOGLE_CLIENT_SECRET", ""),
+            therapy_areas=os.environ.get("GYM_THERAPY_AREAS", "").strip(),
         )

@@ -21,7 +21,12 @@ TABLES = (
     "import_batches",
     "vault_writes",
 )
-EXCLUDED = {"source_records": {"original_text"}, "vault_writes": {"content"}}
+EXCLUDED = {
+    "source_records": {"original_text"},
+    "vault_writes": {"content"},
+    "workout_sessions": {"therapy_areas"},
+    "workout_sets": {"activity_area"},
+}
 
 
 def extract_snapshot(database_path):

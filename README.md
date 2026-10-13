@@ -8,9 +8,11 @@ FastAPI, SQLite, DuckDB, and dbt for Analytics Engineering practice.
 
 - Suggests A/B after each completed workout; defaults come from the latest
   completed session of the same routine, with template fallbacks.
-- Autosaves drafts and resumes after reload. Record Done/Skip, remove an exercise
-  for a session, or undo removal. New sessions restore the routine's items.
-- Supports core exercises and a nonnumeric physical-therapy completion/notes item.
+- Autosaves drafts and resumes after reload. Remove an individual set or an entire
+  exercise for a session, or undo removal. New sessions restore the routine's items.
+- Supports core exercises and separate physical-therapy muscle/area rows with
+  autosave, ×/Undo, and an **Add area** button.
+- **Add set** records extra sets for an exercise without changing the routine template.
 - Publishes finished workouts as dated Markdown notes in your configured folder.
   Failed writes remain retryable; existing differing notes are never overwritten.
 - Provides workout history and an explicit SQLite → DuckDB → dbt refresh.
@@ -72,9 +74,16 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
 ## Record a workout
 
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.
-2. Select Done/Skip, or confirm **Mark remaining done**. Valid edits autosave.
-3. Use ×/Undo for session-only removal; add session or activity notes as needed.
-4. Select **Finish workout**. A/B advances after successful Markdown publication.
+2. Valid edits autosave. Use ×/Undo beside a set for session-only removal, or
+   use the exercise header's × to remove the entire exercise.
+3. Use **Add set** if you do extra sets. Enter each Physical Therapy muscle/area
+   in its own row; **Add area** creates another and ×/Undo controls each row.
+   Add session notes as needed. New workouts reuse the latest therapy areas,
+   including areas removed for a single session. An optional `GYM_THERAPY_AREAS`
+   setting supplies comma-separated initial defaults. Extra numeric sets are
+   session-only; new workouts start with the routine template's set count.
+4. Select **Finish workout** to record every remaining set and activity as done.
+   A/B advances after successful Markdown publication.
 
 Reloading resumes drafts. Same-date/same-routine requests reopen the existing
 session. Legacy defaults follow recorded order and label that assumption; uncertain

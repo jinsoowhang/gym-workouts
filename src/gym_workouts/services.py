@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select, text, update
 from sqlalchemy.orm import object_session
 
-from gym_workouts.contracts import SessionCommand, format_weight
+from gym_workouts.contracts import SessionCommand, format_weight, split_therapy_areas
 from gym_workouts.importer import checksum
 from gym_workouts.models import ImportBatch, SourceRecord, VaultWrite, WorkoutSession, WorkoutSet
 from gym_workouts.repositories import WorkoutRepository
@@ -82,6 +82,8 @@ class WorkoutService:
                 if prior
                 else {}
             )
+            areas = [r.activity_area for r in last.rows if r.activity_area] if last else []
+            areas = areas or split_therapy_areas(self.settings.therapy_areas)
             workout = WorkoutSession(
                 id=str(uuid4()),
                 routine=chosen,
@@ -89,6 +91,7 @@ class WorkoutService:
                 created_at=datetime.now(UTC).isoformat(),
                 status="draft",
                 notes="",
+                therapy_areas=", ".join(areas),
             )
             db.add(workout)
             db.flush()
@@ -100,6 +103,7 @@ class WorkoutService:
                     WorkoutSet(
                         id=str(uuid4()),
                         exercise_id=planned.exercise_id,
+                        exercise=planned.exercise,
                         template_key=planned.id,
                         position=planned.position,
                         occurrence=planned.occurrence,
@@ -116,6 +120,7 @@ class WorkoutService:
                         else "Template",
                     )
                 )
+            self._set_therapy_areas(workout, areas)
             db.commit()
             return session_view(repo.get(workout.id))
 
@@ -146,17 +151,28 @@ class WorkoutService:
                 workout.revision = command.revision + 1
                 if command.action != "discard":
                     self._apply_edits(workout, command)
-                if command.action.startswith(("remove:", "restore:")):
-                    action, exercise_id = command.action.split(":", 1)
-                    matching = [r for r in workout.rows if r.exercise_id == exercise_id]
+                if command.action.startswith(
+                    ("remove:", "restore:", "remove-set:", "restore-set:")
+                ):
+                    action, target_id = command.action.split(":", 1)
+                    by_set = action.endswith("-set")
+                    matching = [
+                        r for r in workout.rows if (r.id if by_set else r.exercise_id) == target_id
+                    ]
                     if not matching:
-                        raise ValueError("Exercise is not in this session")
+                        raise ValueError(
+                            "Set is not in this session"
+                            if by_set
+                            else "Exercise is not in this session"
+                        )
                     for row in matching:
-                        if action == "remove" and row.state != "removed":
+                        if action.startswith("remove") and row.state != "removed":
                             row.previous_state, row.state = row.state, "removed"
-                        elif action == "restore" and row.state == "removed":
+                        elif action.startswith("restore") and row.state == "removed":
                             row.state = row.previous_state or "pending"
                             row.previous_state = None
+                elif command.action.startswith("add-set:"):
+                    self._append_row(workout, command.action.split(":", 1)[1])
                 elif command.action == "mark-all":
                     for row in workout.rows:
                         if row.state == "pending":
@@ -185,6 +201,7 @@ class WorkoutService:
                     retry = True
                 elif command.action != "save":
                     raise ValueError("Unknown session action")
+                workout.therapy_areas = therapy_summary(workout)
         if retry:
             self.retry_write(session_id)
         return self.get(session_id)
@@ -198,15 +215,63 @@ class WorkoutService:
             if row.state == "removed":
                 continue
             if edit.state not in ("pending", "performed", "skipped"):
-                raise ValueError("Use the exercise removal action to remove sets")
+                raise ValueError("Use a removal action to remove sets")
             if row.exercise.measurement_type == "weight_reps":
                 if edit.weight is None or edit.reps is None:
                     raise ValueError("Every numeric set needs weight and reps")
                 row.weight, row.reps = edit.weight, edit.reps
             elif edit.weight is not None or edit.reps is not None:
                 raise ValueError("Physical therapy does not have a weight or reps")
+            if edit.activity_area is not None:
+                if row.exercise.measurement_type != "activity" and edit.activity_area:
+                    raise ValueError("Only physical therapy rows have an area")
+                row.activity_area = edit.activity_area.strip()
             row.state = edit.state
         workout.notes = command.notes
+        if (
+            command.therapy_areas is not None
+            and not any(edit.activity_area is not None for edit in command.sets)
+            and command.therapy_areas.strip() != therapy_summary(workout)
+        ):
+            self._set_therapy_areas(workout, split_therapy_areas(command.therapy_areas))
+
+    def _append_row(self, workout, exercise_id, *, area="", state="pending"):
+        matching = [row for row in workout.rows if row.exercise_id == exercise_id]
+        if not matching:
+            raise ValueError("Exercise is not in this session")
+        source = next((row for row in reversed(matching) if row.state != "removed"), matching[-1])
+        extra = WorkoutSet(
+            id=str(uuid4()),
+            exercise_id=exercise_id,
+            exercise=source.exercise,
+            template_key=None,
+            position=max(row.position for row in workout.rows) + 1,
+            occurrence=max(row.occurrence for row in matching) + 1,
+            weight=source.weight,
+            reps=source.reps,
+            state=state,
+            activity_area=area,
+            previous_state=source.previous_state if state == "removed" else None,
+            default_weight=source.weight,
+            default_reps=source.reps,
+            default_source="Added this session",
+        )
+        workout.rows.append(extra)
+        return extra
+
+    def _set_therapy_areas(self, workout, areas):
+        rows = [row for row in workout.rows if row.exercise.measurement_type == "activity"]
+        if not rows:
+            return
+        areas = areas or [""]
+        for index, area in enumerate(areas):
+            if index < len(rows):
+                rows[index].activity_area = area
+            else:
+                self._append_row(workout, rows[0].exercise_id, area=area, state=rows[0].state)
+        for row in rows[len(areas) :]:
+            if row.state != "removed":
+                row.previous_state, row.state = row.state, "removed"
 
     def retry_write(self, session_id):
         with self.factory() as db:
@@ -268,6 +333,12 @@ class WorkoutService:
             workout.status = "completed"
 
 
+def therapy_summary(workout):
+    return ", ".join(
+        row.activity_area for row in workout.rows if row.activity_area and row.state != "removed"
+    )
+
+
 def session_view(workout):
     if workout is None:
         return None
@@ -279,6 +350,7 @@ def session_view(workout):
         "status": workout.status,
         "revision": workout.revision,
         "notes": workout.notes,
+        "therapy_areas": therapy_summary(workout),
         "error": write.error if write else None,
         "vault_saved": bool(write and write.status == "saved"),
         "source_path": workout.source_path,
@@ -295,6 +367,7 @@ def session_view(workout):
                 "reps": row.reps,
                 "state": row.state,
                 "previous_state": row.previous_state,
+                "activity_area": row.activity_area,
                 "default_weight": format_weight(row.default_weight),
                 "default_reps": row.default_reps,
                 "default_source": row.default_source,
@@ -315,6 +388,7 @@ def serialize_note(workout):
         "completed_at": workout.completed_at,
         "weight_unit": "lb",
         "notes": workout.notes,
+        "therapy_areas": view["therapy_areas"],
         "gym_sets": [
             {
                 k: row[k]
@@ -327,16 +401,21 @@ def serialize_note(workout):
                     "state",
                     "template_key",
                     "previous_state",
+                    "activity_area",
                 )
             }
             for row in view["sets"]
         ],
     }
     # The existing Templater parses numeric prefixes on every line, including YAML.
-    # Encode spaces in the notes scalar so it cannot masquerade as a set.
-    encoded_notes = json.dumps(workout.notes).replace(" ", r"\u0020")
+    # Encode spaces in free text so it cannot masquerade as a set.
     header = "---\n" + "\n".join(
-        f"{key}: {encoded_notes if key == 'notes' else json.dumps(value)}"
+        f"{key}: "
+        + (
+            json.dumps(value, separators=(",", ":")).replace(" ", r"\u0020")
+            if key in {"notes", "therapy_areas", "gym_sets"}
+            else json.dumps(value)
+        )
         for key, value in metadata.items()
     )
     lines = [header, "---", f"# {workout.session_date} Workout {workout.routine}", ""]
@@ -347,6 +426,19 @@ def serialize_note(workout):
                 if row["type"] == "activity"
                 else f"{row['name']} {row['weight']} {row['reps']}"
             )
+    areas = [
+        row["activity_area"]
+        for row in view["sets"]
+        if row["state"] == "performed" and row["activity_area"]
+    ]
+    if areas:
+        lines.extend(
+            [
+                "",
+                "## Physical Therapy",
+                *(f"> Area: {area} <!-- therapy area -->" for area in areas),
+            ]
+        )
     if workout.notes:
         lines.extend(
             [

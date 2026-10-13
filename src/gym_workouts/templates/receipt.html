@@ -1,2 +1,2 @@
 {% if error %}<span class="save-error">{{ error }} <a href="/">Reload latest workout</a></span>
-{% else %}<span class="saved">Draft saved</span><input type="hidden" id="revision" name="revision" value="{{ revision }}" hx-swap-oob="true"><span id="progress-summary" class="session-detail" hx-swap-oob="true">{{ done }} / {{ total }} sets & activities done</span>{% endif %}
+{% else %}<span class="saved">Draft saved</span><input type="hidden" id="revision" name="revision" value="{{ revision }}" hx-swap-oob="true"><span id="progress-summary" class="session-detail" hx-swap-oob="true">{{ total }} sets & activities included</span>{% endif %}

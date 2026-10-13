@@ -8,12 +8,14 @@ import uvicorn
 from playwright.sync_api import expect, sync_playwright
 
 from gym_workouts.app import create_app
+from gym_workouts.contracts import parse_note
 
 
 @pytest.mark.skipif(
     os.environ.get("GYM_BROWSER_TESTS") != "1", reason="Opt-in browser verification"
 )
 @pytest.mark.parametrize("settle_delay", [20, 200])
+@pytest.mark.parametrize("configured", [4], indirect=True)
 def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay):
     settings, _factory, _service = configured
     app = create_app(settings)
@@ -61,10 +63,68 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                     page.get_by_role("button", name="Remove Leg Raise", exact=True)
                 ).to_be_visible()
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
-                page.get_by_role("button", name="Mark remaining done").click()
-                expect(page.locator(".set-state").first).to_have_value("performed")
+                expect(page.get_by_text("STATUS", exact=True)).to_have_count(0)
+                expect(page.locator("select.set-state")).to_have_count(0)
+                expect(page.locator(".exercise-icon svg")).to_have_count(7)
+                fourth_set = page.get_by_role("button", name="Remove Bench Press set 4", exact=True)
+                fourth_set.click()
+                undo = page.get_by_role("button", name="Restore Bench Press set 4", exact=True)
+                expect(undo).to_be_visible()
+                expect(
+                    page.get_by_role("spinbutton", name="Bench Press set 3 weight in lb")
+                ).to_be_visible()
+                page.reload()
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
+                expect(undo).to_be_visible()
+                undo.click()
+                expect(fourth_set).to_be_visible()
+                expect(
+                    page.get_by_role("spinbutton", name="Bench Press set 4 weight in lb")
+                ).to_have_value("40")
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                fourth_set.click()
+                expect(undo).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                expect(page.locator("#progress-summary")).to_have_text(
+                    "9 sets & activities included"
+                )
+                page.get_by_role("button", name="Add set to Bench Press", exact=True).click()
+                fifth = page.get_by_role("spinbutton", name="Bench Press set 5 weight in lb")
+                expect(fifth).to_have_value("40")
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                revision = int(page.locator("#revision").input_value())
+                fifth.fill("35.125")
+                expect(page.locator("#revision")).to_have_value(str(revision + 1))
+                areas = page.get_by_role("textbox", name="Physical Therapy area 1", exact=True)
+                revision = int(page.locator("#revision").input_value())
+                areas.fill("Ankle")
+                expect(page.locator("#revision")).to_have_value(str(revision + 1))
+                page.get_by_role("button", name="Add area to Physical Therapy", exact=True).click()
+                second_area = page.get_by_role(
+                    "textbox", name="Physical Therapy area 2", exact=True
+                )
+                expect(second_area).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                revision = int(page.locator("#revision").input_value())
+                second_area.fill("Elbow")
+                expect(page.locator("#revision")).to_have_value(str(revision + 1))
+                page.get_by_role(
+                    "button", name="Remove Physical Therapy area 1", exact=True
+                ).click()
+                restore_area = page.get_by_role(
+                    "button", name="Restore Physical Therapy area 1", exact=True
+                )
+                expect(restore_area).to_be_visible()
+                expect(second_area).to_have_value("Elbow")
+                page.reload()
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
+                expect(restore_area).to_be_visible()
+                restore_area.click()
+                expect(areas).to_have_value("Ankle")
+                expect(fifth).to_have_value("35.125")
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 # Finish must submit the current input even before a delayed autosave runs.
+                second_area.fill("Wrist")
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 field.fill("40.125")
                 page.get_by_role("button", name="Finish workout").click()
@@ -72,8 +132,17 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(page.locator(".session-bar .pill")).to_have_text("Completed")
                 note = settings.workout_dir / "2026-10-11 Workout B.md"
                 assert "deadlift 40.125 7" in note.read_text()
+                assert parse_note(note.read_text()).metadata["therapy_areas"] == "Ankle, Wrist"
+                bench = [
+                    row for row in parse_note(note.read_text()).rows if row.name == "bench press"
+                ]
+                assert [row.state for row in bench] == ["performed"] * 3 + ["removed", "performed"]
+                assert str(bench[-1].weight) == "35.125"
                 page.reload()
                 expect(page.locator(".session-bar .pill")).to_have_text("Completed")
+                expect(areas).to_have_value("Ankle")
+                expect(second_area).to_have_value("Wrist")
+                expect(areas).to_have_attribute("readonly", "")
                 assert not errors
                 browser.close()
         finally:
