@@ -67,6 +67,29 @@ document.addEventListener("htmx:sendError", () => {
   }
 });
 
+document.addEventListener("htmx:responseError", (event) => {
+  if (event.detail.xhr.status !== 401) return;
+  const receipt = document.getElementById("save-status");
+  if (!receipt) return;
+  receipt.textContent = "Your sign-in expired. Sign in in a new tab, then retry saving these edits. ";
+  receipt.classList.add("save-error");
+  const login = document.createElement("a");
+  login.href = "/auth/login";
+  login.target = "_blank";
+  login.rel = "noopener";
+  login.textContent = "Sign in with Google";
+  receipt.append(login);
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.className = "text-button";
+  retry.textContent = "Retry save";
+  retry.addEventListener("click", () => {
+    const form = document.getElementById("session-form");
+    if (form) htmx.trigger(form, "input");
+  });
+  receipt.append(retry);
+});
+
 window.addEventListener("beforeunload", (event) => {
   if (changes > acknowledged) {
     event.preventDefault();

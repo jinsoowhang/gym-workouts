@@ -1,96 +1,97 @@
-# Private VPS hosting with Google sign-in
+# VPS hosting with direct Google sign-in
 
-The app can run continuously in Docker on a Linux VPS. Its HTTP server stays on
-`127.0.0.1`; Cloudflare Tunnel connects it to an HTTPS hostname. Cloudflare Access
-authenticates users through Google and allows only the explicitly approved email
-address. The tunnel verifies the Access token before forwarding requests.
+The app runs continuously in Docker behind your existing HTTPS reverse proxy.
+Google sign-in is part of the app. A verified Google identity must match the
+single approved email address before any workout page or API is available.
+Cloudflare can continue providing DNS for the domain. Zero Trust is not required.
 
-## App and storage
+## Private settings and Google client
 
-Use `deploy/Dockerfile` and `deploy/compose.yml`. The Docker build context permits
-only application source, migration files, and dependency metadata. Runtime
-databases, environment settings, backups, and workout notes are excluded.
+Create a private `.env` on the VPS from `deploy/.env.example`. Set the hostname,
+state directory, synced workout directory, and timezone. Set `GYM_UID`/`GYM_GID`
+to the owner of the workout folder and give that account ownership of the state
+directory. `GYM_PROXY_NETWORK` must name the existing proxy's Docker network;
+`GYM_PROXY_IPS` must contain the trusted proxy container's IP address.
 
-Create a private `.env` on the VPS using `deploy/.env.example`. Set the hostname,
-state directory, timezone, and synced workout directory. Set `GYM_UID`/`GYM_GID`
-to the owner of that folder. Pre-create the state directory and give that account
-ownership. The container persists SQLite separately from the source checkout.
+Store the actual allowed email and secrets only in that private file. Generate
+`GYM_SESSION_SECRET` with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`.
+Preserve this value across deployments. Never put it in source, examples, logs,
+or issue reports. The hosted Compose configuration always enables authentication.
+If Google credentials are not configured, the app shows a setup page and blocks
+workout pages and APIs.
+
+Create a dedicated **Web application** OAuth client in
+[Google Cloud Console](https://console.cloud.google.com/auth/clients). Choose an
+external audience for a personal Google account and configure only the basic
+`openid` and `email` sign-in scopes. Use your app origin as the authorized
+JavaScript origin, and its `/auth/callback` URL as the authorized redirect URI.
+For example:
+
+- Origin: `https://gym.example.com`
+- Redirect URI: `https://gym.example.com/auth/callback`
+
+If the client is in testing, add the approved account as a test user. Download
+its credential JSON into an ignored private directory such as `.secrets/`; an
+existing Desktop OAuth client is not suitable for this web callback. Set its
+client ID and secret as `GYM_GOOGLE_CLIENT_ID` and `GYM_GOOGLE_CLIENT_SECRET` in
+the private VPS `.env`, then recreate the app container. The app does not request
+Gmail-reading permissions or store Google access/refresh tokens.
+
+Reference: [Google's OpenID Connect server flow](https://developers.google.com/identity/openid-connect/openid-connect).
+
+## Docker and database
+
+The Docker context includes only source, migrations, and dependency metadata.
+Runtime databases, environment files, backups, and private notes are excluded.
+The container joins the proxy's Docker network and publishes no host port.
+Configure the reverse proxy to reach `http://gym-workouts:8010` on that network.
+Keep authentication enabled even when routing directly to the container.
 
 ```bash
 docker compose --env-file .env -f deploy/compose.yml build
 ```
 
-For a fresh installation, import the templates and existing notes:
+For a fresh database, import your templates and historical notes:
 
 ```bash
-docker compose --env-file .env -f deploy/compose.yml run --rm app /app/.venv/bin/gym-init
+docker compose --env-file .env -f deploy/compose.yml run --rm gym /app/.venv/bin/gym-init
 ```
 
-To migrate an existing installation, use Python's SQLite backup API to create a
-consistent copy of the local application database. Transfer that copy privately
-to the server's state directory as `app/gym.sqlite3`. Do not copy a running
-database file without its WAL. Apply migrations to that copy without reimporting:
+For an existing database, use SQLite's backup API to create a consistent copy.
+Transfer it privately into the state directory as `app/gym.sqlite3`. Apply
+migrations to that copy without reimporting the vault:
 
 ```bash
-docker compose --env-file .env -f deploy/compose.yml run --rm app /app/.venv/bin/python -c 'from gym_workouts.cli import migrate; from gym_workouts.config import Settings; migrate(Settings.from_env())'
-docker compose --env-file .env -f deploy/compose.yml up -d app
+docker compose --env-file .env -f deploy/compose.yml run --rm gym /app/.venv/bin/python -c 'from gym_workouts.cli import migrate; from gym_workouts.config import Settings; migrate(Settings.from_env())'
+docker compose --env-file .env -f deploy/compose.yml up -d --remove-orphans gym
 ```
 
-This starts a private staging instance. Check health through the VPS itself:
+The login-session migration adds a separate table and preserves existing workout
+records. Health checks use `/health` inside the container.
 
-```bash
-curl http://127.0.0.1:8010/health
-```
+## HTTPS proxy and cutover
 
-## Cloudflare and Google
+Create a proxy host for the app subdomain in your existing Nginx Proxy Manager.
+Forward to `gym-workouts` on port `8010`, with scheme `http`. Obtain a certificate
+covering that subdomain and force HTTPS. Preserve the public Host and forward the
+HTTPS scheme; Uvicorn trusts only the proxy address configured above. Disable
+access logging for this host so OAuth callback codes are not recorded in URLs.
 
-Use a domain managed by your Cloudflare account. The account owner must configure
-the identity provider; the app needs no Gmail-reading permission.
+Before active recording moves to the VPS, stop the local recording server and
+take a final consistent SQLite backup. Stop the hosted container, replace its
+staging database with that final copy, apply migrations, and restart. Keep the
+local backup. Use one active recording database and sync only the Markdown folder
+through the existing Obsidian/Syncthing workflow; never sync live SQLite.
 
-1. In Cloudflare Zero Trust, find or create the team's Access domain.
-2. Create a **Web application** OAuth client in Google Cloud. Use the team's
-   `https://TEAM.cloudflareaccess.com` as its authorized JavaScript origin and
-   `https://TEAM.cloudflareaccess.com/cdn-cgi/access/callback` as its redirect URI.
-   Choose an external audience for a personal Gmail account. Keep the client
-   secret private. An existing Desktop OAuth client cannot replace this client.
-3. In Cloudflare Zero Trust, add **Google** as an identity provider using that
-   OAuth client's ID and secret. Test the provider.
-4. Create a **Self-hosted** Access application covering the entire app hostname.
-   Select Google as its login method. Add an **Allow** policy for the specific
-   approved email address. Avoid broad rules that admit every Google account.
-   Record the application's audience (AUD) tag.
-5. Create a dedicated locally managed Cloudflare Tunnel. Store its credential
-   JSON and configuration outside the public checkout, in `GYM_TUNNEL_DIR`.
-   Populate `deploy/cloudflared.example.yml` with the tunnel ID, hostname, team,
-   and AUD tag. Keep `access.required: true`. Route the hostname's DNS to this
-   tunnel only after the Access application exists.
-6. Set `GYM_CLOUDFLARED_IMAGE` to a verified version or image digest, then start
-   the connector:
+Verify anonymous HTML redirects to `/login`, APIs return 401 without exposing
+workout data, and an unapproved Google account cannot log in. Verify the approved
+account can finish a workout and that its note reaches the PC. Sessions have a
+fixed 24-hour expiry, and signing out revokes the server-side session. Expired
+sign-in leaves unsaved fields intact and offers a new-tab login and save retry.
+Change the Desktop launcher to open the hosted URL only after authenticated
+recording and vault sync pass.
 
-```bash
-docker compose --env-file .env -f deploy/compose.yml -f deploy/compose.tunnel.yml up -d
-```
-
-Official references: [Google identity provider](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/google/),
-[protecting a self-hosted app](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/),
-and [tunnel token validation](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/origin-parameters/#access).
-
-## Cutover and verification
-
-Before switching to the hosted app, stop the local recording server, take a final
-SQLite backup, and update the server copy while its container is stopped. Keep
-the local backup for recovery. Use one application database for active recording;
-sync the Markdown folder through Obsidian's existing file-sync process. Syncthing
-can carry new notes back to the PC when it reconnects. Do not sync live SQLite.
-
-Verify that anonymous requests to both `/` and `/api/v1/sessions` reach the login
-gate, an unapproved Google account is refused, and the approved account can record
-and finish a workout. Confirm the resulting Markdown note reaches the PC. Check
-that the VPS's app port is unreachable from outside and that restarting the app
-retains its data. Change the Desktop launcher to open the hosted URL after these
-checks pass.
-
-The reverse proxy must preserve the public Host and HTTPS scheme. Uvicorn trusts
-forwarded scheme headers from loopback by default, where this connector runs.
-`GYM_ALLOWED_HOSTS` permits the configured hostname; mutation-origin checks remain
-active. Back up SQLite and the workout folder together using consistent snapshots.
+Local recording keeps its no-login default and loopback listener. After updating
+an existing local installation, apply migrations before restarting it. Keep
+private login identities and OAuth credentials outside GitHub. The publication
+checks reject personal email addresses and credential JSON files.

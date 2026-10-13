@@ -60,17 +60,26 @@ launcher calls the project launcher, so fixes apply to both entry points.
 
 ## VPS hosting
 
-`deploy/compose.yml` runs the app in Docker on host loopback with persistent
-SQLite and a mounted, synced workout folder. `GYM_ALLOWED_HOSTS` accepts only
-explicit hostnames; local defaults and mutation-origin checks remain active.
-The optional Cloudflare Tunnel connector validates Access JWTs before forwarding
-requests. Google authentication belongs in Cloudflare Access with a specific
-email allowlist; Desktop Google OAuth credentials cannot supply web sign-in.
+The selected hosting design now uses direct Google sign-in in the app behind the
+VPS's existing Nginx Proxy Manager. Cloudflare Access/Tailscale is not required.
+`deploy/compose.yml` joins the existing proxy network without publishing a host
+port, with persistent SQLite and the synced workout folder. The hosted app admits
+only the verified email in private settings. Local mode keeps its existing flow.
+
+Direct Google OAuth is implemented and ready for publication; hosted deployment
+is still pending. It uses Authlib OIDC validation, PKCE, secure session cookies, hashed
+server-side sessions, a fixed 24-hour expiry, and logout revocation. Missing Google
+credentials fail closed. A new Alembic migration adds login sessions; apply it
+before running the updated app. All 66 Python/browser tests, Ruff, formatting,
+whitespace checks, and the public-file policy passed at this checkpoint.
 
 A private VPS staging instance is running. The existing Syncthing vault includes
 the workout folder and can sync completed notes back to the PC. The approved Gmail
-address is saved only in private settings. Public routing, Google provider
-configuration, and final database cutover remain pending. Deployment details are recorded in the
+address is saved only in private settings. That staging instance still runs the
+earlier loopback-only deployment; no public app route has been added. A Google
+Web application OAuth client is required next; existing Desktop OAuth credentials
+cannot supply web sign-in. Public routing, real Google sign-in verification, and
+final database cutover remain pending. Deployment details are recorded in the
 ignored `.secrets/vps-deployment-status.json`; see `docs/vps-deployment.md` for
 the portable setup. Stop the local recorder and take a final consistent SQLite
 backup before switching active recording to the VPS. Never sync live SQLite.
@@ -78,3 +87,10 @@ backup before switching active recording to the VPS. Never sync live SQLite.
 The published VPS changes passed an independent GitHub clone audit of all six
 reachable commits and 106 distinct file versions: no private deployment identifiers,
 no secrets found by Gitleaks, and no private login address in commit metadata.
+
+Local recording remains active while Google Web OAuth setup and the VPS cutover
+are pending. Keep the GitHub noreply identity and private settings out of publication.
+
+Google sign-in publication is prepared with private credentials and machine settings
+excluded. Synthetic authentication/browser verification accompanies the implementation.
+Hosted Google account setup, public routing, and database cutover remain pending.

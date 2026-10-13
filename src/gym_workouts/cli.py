@@ -74,7 +74,13 @@ def web_main():
     from gym_workouts.app import create_app
 
     print(f"Gym Workouts: http://127.0.0.1:{settings.port}")
-    uvicorn.run(create_app(settings), host="127.0.0.1", port=settings.port)
+    uvicorn.run(
+        create_app(settings),
+        host=settings.bind_host,
+        port=settings.port,
+        forwarded_allow_ips=settings.proxy_ips,
+        access_log=not settings.auth_enabled,
+    )
 
 
 def snapshot_main():

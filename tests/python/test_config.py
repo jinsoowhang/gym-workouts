@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -44,4 +45,35 @@ def test_hosted_hostnames_are_explicit_and_normalized(monkeypatch):
 def test_host_configuration_rejects_wildcards_and_urls(monkeypatch, hosts):
     monkeypatch.setenv("GYM_ALLOWED_HOSTS", hosts)
     with pytest.raises(ValueError, match="exact hostnames"):
+        Settings.from_env()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"public_url": "http://gym.example.com"},
+        {"public_url": "https://other.example.com"},
+        {"public_url": "https://gym.example.com/path"},
+        {"public_url": "https://user@gym.example.com"},
+        {"session_secret": "short"},
+        {"allowed_email": ""},
+        {"google_client_id": "client", "google_client_secret": ""},
+    ],
+)
+def test_hosted_auth_configuration_rejects_incomplete_or_unsafe_settings(tmp_path, overrides):
+    settings = Settings(tmp_path / "app.db", tmp_path / "workout", tmp_path / "warehouse.db")
+    valid = {
+        "auth_enabled": True,
+        "public_url": "https://gym.example.com",
+        "allowed_hosts": ("gym.example.com",),
+        "session_secret": "s" * 64,
+        "allowed_email": "owner@example.com",
+    }
+    with pytest.raises(ValueError):
+        replace(settings, **(valid | overrides))
+
+
+def test_auth_flag_does_not_silently_disable_login(monkeypatch):
+    monkeypatch.setenv("GYM_AUTH_ENABLED", "ture")
+    with pytest.raises(ValueError, match="true or false"):
         Settings.from_env()

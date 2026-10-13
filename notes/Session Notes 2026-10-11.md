@@ -121,3 +121,43 @@ public-file check now rejects those files even if already staged and rejects
 personal email addresses in publishable content. Four scoped regression cases
 cover a generic example contact, a synthetic personal contact, and force-staged
 credential files. These checks passed, along with Ruff and whitespace validation.
+
+## Direct Google login checkpoint
+
+### What was done
+
+1. Replaced the planned Cloudflare Access setup with app-level Google sign-in
+   behind the VPS's existing Nginx Proxy Manager, using the existing domain.
+2. Added verified-email allowlisting, OIDC validation, PKCE, secure cookies,
+   hashed database sessions, 24-hour expiry, logout revocation, and a login page.
+   Hosted mode fails closed when Google credentials are missing. Local mode keeps
+   the existing recording flow. Added a migration for login sessions.
+3. Updated Docker deployment, private-setting examples, and deployment guidance.
+   Hosted access logs are disabled so callback codes do not enter app logs.
+   Expired autosave requests preserve input and offer sign-in and retry actions.
+4. Verified all 66 Python/browser tests, Ruff lint and formatting, whitespace, and
+   the public-file policy. Authentication tests cover real signed test ID tokens,
+   invalid claims/signatures/state, cookie tampering, expiry, and logout replay.
+
+### Current state
+
+Paused at the user's request until the next usage-limit reset. Direct-login code
+and these notes are saved in the local working tree, uncommitted and unpushed.
+The VPS still runs the earlier private staging version. No public app route has
+been added, and the new login-session migration has not been applied to the live
+local or staging database. Private identifiers, the allowlist, and credentials
+remain in ignored settings. The public repository uses a GitHub noreply identity.
+
+### Next steps
+
+1. Obtain a dedicated Google Web application OAuth client. Use the callback URL
+   recorded in private deployment settings; Desktop clients cannot be reused.
+   Store the client secret only in an ignored private file or VPS environment.
+2. Verify the browser's expired-session sign-in/retry path, then review the final
+   diff and repeat the publication secret audit before committing/pushing. Commit
+   these project notes alongside the feature using the existing noreply identity.
+3. Build and migrate the VPS app, configure the existing proxy and HTTPS, and
+   verify public pages remain protected and the approved Google account can log in.
+4. Stop local recording, take a final consistent SQLite backup, and cut over to one
+   active VPS database. Verify workout saving and Markdown sync, then update the
+   Desktop entry point to the hosted URL. Never sync live SQLite between machines.

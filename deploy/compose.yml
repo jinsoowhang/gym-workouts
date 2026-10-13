@@ -1,13 +1,15 @@
 name: gym-workouts
 services:
-  app:
+  gym:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
     image: gym-workouts:local
     restart: unless-stopped
-    # The app stays on loopback, reachable by the host's cloudflared connector.
-    network_mode: host
+    # Reachable inside the proxy's Docker network; no app port is published.
+    networks:
+      proxy:
+        aliases: [gym-workouts]
     user: "${GYM_UID:-10001}:${GYM_GID:-10001}"
     environment:
       GYM_DATABASE_PATH: /state/app/gym.sqlite3
@@ -16,6 +18,14 @@ services:
       GYM_TIMEZONE: "${GYM_TIMEZONE:-UTC}"
       GYM_PORT: "${GYM_PORT:-8010}"
       GYM_ALLOWED_HOSTS: "${GYM_PUBLIC_HOST:?Set GYM_PUBLIC_HOST},127.0.0.1,localhost"
+      GYM_BIND_HOST: 0.0.0.0
+      GYM_PROXY_IPS: "${GYM_PROXY_IPS:?Set GYM_PROXY_IPS to the trusted proxy address}"
+      GYM_AUTH_ENABLED: "true"
+      GYM_PUBLIC_URL: "https://${GYM_PUBLIC_HOST}"
+      GYM_ALLOWED_EMAIL: "${GYM_ALLOWED_EMAIL:?Set the private owner allowlist}"
+      GYM_SESSION_SECRET: "${GYM_SESSION_SECRET:?Set a private random session secret}"
+      GYM_GOOGLE_CLIENT_ID: "${GYM_GOOGLE_CLIENT_ID:-}"
+      GYM_GOOGLE_CLIENT_SECRET: "${GYM_GOOGLE_CLIENT_SECRET:-}"
     volumes:
       - "${GYM_STATE_DIR:?Set GYM_STATE_DIR}:/state"
       - "${GYM_WORKOUT_DIR:?Set GYM_WORKOUT_DIR}:/workout"
@@ -31,3 +41,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+networks:
+  proxy:
+    external: true
+    name: "${GYM_PROXY_NETWORK:-npm_default}"

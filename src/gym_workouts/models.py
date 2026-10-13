@@ -105,3 +105,11 @@ class VaultWrite(Base):
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[str | None] = mapped_column(Text)
     __table_args__ = (CheckConstraint("status IN ('pending', 'saved', 'failed')"),)
+
+
+class LoginSession(Base):
+    __tablename__ = "login_sessions"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    subject: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String)
+    expires_at: Mapped[int] = mapped_column(Integer, index=True)

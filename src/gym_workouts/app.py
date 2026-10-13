@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from gym_workouts.auth import configure_auth
 from gym_workouts.config import Settings
 from gym_workouts.contracts import SessionCommand, StartCommand
 from gym_workouts.database import create_database
@@ -71,7 +72,7 @@ def create_app(settings=None):
     app.state.service = service
     app.state.factory = factory
     app.state.engine = engine
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
+    configure_auth(app, settings, factory, templates)
     app.mount("/static", StaticFiles(directory=PACKAGE / "static"), name="static")
 
     @app.middleware("http")
@@ -233,4 +234,5 @@ def create_app(settings=None):
     def health():
         return {"status": "ok", "application": "gym-workouts"}
 
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     return app

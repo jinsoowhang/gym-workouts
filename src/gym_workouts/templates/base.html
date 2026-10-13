@@ -15,7 +15,7 @@
   <a class="skip-link" href="#main">Skip to workout</a>
   <header class="site-header">
     <a class="brand" href="/" aria-label="Gym Workouts home"><span class="brand-mark" aria-hidden="true">G.</span>GYM WORKOUTS</a>
-    <nav aria-label="Main navigation"><a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Workout</a><a href="/history" {% if request.url.path == '/history' %}aria-current="page"{% endif %}>History</a></nav>
+    {% if not request.app.state.auth_enabled or request.state.authenticated %}<nav aria-label="Main navigation"><a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Workout</a><a href="/history" {% if request.url.path == '/history' %}aria-current="page"{% endif %}>History</a>{% if request.app.state.auth_enabled %}<form action="/auth/logout" method="post"><button class="text-button" type="submit">Sign out</button></form>{% endif %}</nav>{% endif %}
     <span class="header-note"><span class="status-dot"></span> Your personal training log</span>
   </header>
   <main id="main">{% block content %}{% endblock %}</main>

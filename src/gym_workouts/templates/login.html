@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Gym Workouts{% endblock %}
+{% block content %}
+<section class="workout-shell">
+  <div class="page-intro"><div><p class="eyebrow">YOUR TRAINING, IN FOCUS</p><h1>Your workouts, always within reach.</h1><p class="intro-copy">Sign in to continue your workout or review your history.</p></div></div>
+  <div class="start-panel">
+    <div>
+      <h2>Welcome back.</h2>
+      {% if error %}<p class="save-error" role="alert">{{ error }}</p>{% endif %}
+      {% if login_ready %}<p>Use your approved Google account to access your personal workout log.</p><a class="primary" href="/auth/login">Sign in with Google <span aria-hidden="true">↗</span></a>
+      {% else %}<p role="status">Sign-in setup is in progress. Please try again later.</p>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

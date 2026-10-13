@@ -67,7 +67,7 @@ For a custom port, use the command-line launch and open its printed URL.
 
 For a server that stays on while your PC is off, see
 [VPS hosting with Google sign-in](docs/vps-deployment.md). The deployment uses
-Docker, persistent storage, and Cloudflare Access with an account allowlist.
+Docker, persistent storage, and direct Google sign-in restricted to the approved account.
 
 ## Record a workout
 
