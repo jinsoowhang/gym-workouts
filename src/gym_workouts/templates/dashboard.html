@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "exercise_icons.html" import exercise_icon %}
+{% block title %}Dashboard · Gym Workouts{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+  <div class="page-intro"><div><p class="eyebrow">A LITTLE PERSPECTIVE</p><h1>Your training, over time.</h1><p class="intro-copy">See the work you’ve recorded and how your numbers are changing.</p></div><span class="pill complete">{{ range_label }}</span></div>
+  <form class="dashboard-filters" action="/dashboard" method="get" aria-label="Dashboard filters">
+    <div><label for="dashboard-range">Date range</label><select id="dashboard-range" name="days">{% for value, label in ranges.items() %}<option value="{{ value }}" {% if value == days %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="dashboard-exercise">Exercise</label><select id="dashboard-exercise" name="exercise" {% if not exercises %}disabled{% endif %}>{% for exercise in exercises %}<option value="{{ exercise.id }}" {% if exercise.id == selected_id %}selected{% endif %}>{{ exercise.name }}</option>{% else %}<option>No recorded exercises yet</option>{% endfor %}</select></div>
+    <div><label for="dashboard-metric">Compare</label><select id="dashboard-metric" name="metric">{% for value, info in metrics.items() %}<option value="{{ value }}" {% if value == metric %}selected{% endif %}>{{ info.label }} ({{ info.unit }})</option>{% endfor %}</select></div>
+    <button class="primary" type="submit">Update dashboard <span aria-hidden="true">↗</span></button>
+  </form>
+  {% if review_count %}<div class="notice">{{ review_count }} imported workout{{ 's' if review_count != 1 else '' }} in this range await completion review. <a href="/history">Review history</a> to include them.</div>{% endif %}
+  <div class="dashboard-stats">
+    <article class="stat-card"><span class="eyebrow">COMPLETED SESSIONS</span><strong>{{ session_count }}</strong><span>{{ routine_a }} Workout A · {{ routine_b }} Workout B</span></article>
+    <article class="stat-card"><span class="eyebrow">TRAINING DAYS</span><strong>{{ training_days }}</strong><span>Days with a completed workout</span></article>
+    <article class="stat-card"><span class="eyebrow">RECORDED SETS</span><strong>{{ set_count }}</strong><span>Weight-and-rep sets performed</span></article>
+    <article class="stat-card"><span class="eyebrow">RECORDED LOAD VOLUME</span><strong>{{ volume_display }}</strong><span>External lb × reps</span></article>
+  </div>
+  {% if not session_count %}<div class="empty-state"><h2>A little history goes a long way.</h2><p>No completed workouts in this range yet. Choose a wider date range or <a href="/">record a workout</a> to see your trends.</p></div>{% endif %}
+  <div class="dashboard-charts">
+    <article class="dashboard-panel exercise-trend">
+      <header class="dashboard-panel-header"><div class="exercise-heading">{{ exercise_icon(selected_name) }}<div><p class="eyebrow">EXERCISE OVER TIME</p><h2>{{ selected_name }}</h2></div></div><span class="muted">{{ metric_label }} · {{ unit }}</span></header>
+      {% if chart %}
+      <div class="trend-stats"><div><span>Latest</span><strong>{{ latest }} <small>{{ unit }}</small></strong></div><div><span>Highest in range</span><strong>{{ best }} <small>{{ unit }}</small></strong></div><div><span>Change since first session</span><strong>{{ change if change is not none else '—' }}{% if change is not none %} <small>{{ unit }}</small>{% endif %}</strong></div></div>
+      <figure class="dashboard-figure"><div class="chart-frame">
+        <svg class="chart-svg" viewBox="0 0 540 280" role="img" aria-labelledby="exercise-chart-title exercise-chart-description">
+          <title id="exercise-chart-title">{{ selected_name }}: {{ metric_label }} over time</title><desc id="exercise-chart-description">{{ chart.points|length }} recorded sessions. Latest: {{ latest }} {{ unit }}. Highest: {{ best }} {{ unit }}.</desc>
+          <defs><linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a9462d" stop-opacity="0.16"/><stop offset="100%" stop-color="#a9462d" stop-opacity="0.01"/></linearGradient></defs>
+          {% for tick in chart.ticks %}<line x1="72" x2="520" y1="{{ tick.y }}" y2="{{ tick.y }}" class="chart-grid"/><text x="62" y="{{ tick.y + 4 }}" text-anchor="end" class="chart-label">{{ tick.label }}</text>{% endfor %}
+          <path d="{{ chart.area }}" fill="url(#trend-fill)"/><path d="{{ chart.path }}" class="chart-line"/>
+          {% for point in chart.points %}<circle cx="{{ point.x }}" cy="{{ point.y }}" r="5" class="chart-point" tabindex="0"><title>{{ point.date }} · Workout {{ point.routine }}: {{ point.display }} {{ unit }} · Top set {{ point.top_display }}</title></circle>{% endfor %}
+          {% if chart.first_date == chart.last_date %}<text x="296" y="259" text-anchor="middle" class="chart-label">{{ chart.first_date }}</text>{% else %}<text x="72" y="259" class="chart-label">{{ chart.first_date }}</text><text x="520" y="259" text-anchor="end" class="chart-label">{{ chart.last_date }}</text>{% endif %}
+        </svg>
+      </div><figcaption>One point per completed workout that includes this exercise. Hover over a point for its recorded values.</figcaption></figure>
+      {% else %}<div class="chart-empty"><p>No completed sets for this exercise in this range yet.</p><p class="muted">Select another exercise or a wider date range.</p></div>{% endif %}
+    </article>
+    <article class="dashboard-panel frequency-panel">
+      <header class="dashboard-panel-header"><div><p class="eyebrow">SHOWING UP</p><h2>Weekly workout frequency</h2></div></header>
+      <p class="muted">Most recent weeks within your selected range.</p>
+      <figure class="dashboard-figure"><div class="chart-frame">
+        <svg class="chart-svg frequency-svg" viewBox="0 0 360 200" role="img" aria-labelledby="frequency-chart-title">
+          <title id="frequency-chart-title">Completed workouts per week</title><line x1="0" x2="360" y1="150" y2="150" class="chart-grid"/>
+          {% for week in weeks %}<rect x="{{ week.x }}" y="{{ week.y }}" width="{{ week.width }}" height="{{ week.height }}" rx="5" class="frequency-bar"><title>Week of {{ week.date }}: {{ week.count }} completed workout{{ 's' if week.count != 1 else '' }}</title></rect><text x="{{ week.center }}" y="{{ week.y - 8 }}" text-anchor="middle" class="chart-count">{{ week.count }}</text>{% if weeks|length <= 6 or (loop.index0 % 2 == 0 and loop.revindex > 2) or loop.last %}<text x="{{ week.center }}" y="180" text-anchor="middle" class="chart-label">{{ week.label }}</text>{% endif %}{% endfor %}
+        </svg>
+      </div><figcaption>Weeks begin on Monday. Drafts and cancelled workouts are excluded.</figcaption></figure>
+    </article>
+  </div>
+  {% if summaries %}
+  <section class="dashboard-panel exercise-overview"><header class="dashboard-panel-header"><div><p class="eyebrow">THE BIGGER PICTURE</p><h2>Your exercises at a glance</h2></div><span class="muted">{{ range_label }}</span></header>
+    <div class="table-frame"><table class="exercise-table"><caption class="visually-hidden">Recorded exercises in the selected date range</caption><thead><tr><th scope="col">Exercise</th><th scope="col">Sessions</th><th scope="col">Sets</th><th scope="col">Latest top set</th><th scope="col">Weight change</th></tr></thead><tbody>{% for exercise in summaries %}<tr {% if exercise.id == selected_id %}class="selected-exercise"{% endif %}><th scope="row"><a href="/dashboard?days={{ days }}&amp;exercise={{ exercise.id }}&amp;metric={{ metric }}">{{ exercise.name }}</a></th><td>{{ exercise.sessions }}</td><td>{{ exercise.sets }}</td><td>{{ exercise.latest }}<span class="table-date">{{ exercise.date }}</span></td><td>{{ exercise.change }}</td></tr>{% endfor %}</tbody></table></div>
+    <p class="dashboard-footnote">Weight change compares the earliest and latest top-set weight in this range. Each top set pairs its recorded weight with its reps.</p>
+  </section>
+  {% endif %}
+  <p class="dashboard-footnote">Insights use completed workouts and performed sets. Load volume counts external lb × reps; use total reps to compare bodyweight exercises.</p>
+</section>
+{% endblock %}

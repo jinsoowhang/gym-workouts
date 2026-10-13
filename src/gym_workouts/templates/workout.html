@@ -1,5 +1,6 @@
 {% from "exercise_icons.html" import exercise_icon %}
 <section id="workout" class="workout-shell">
+  {% if cancelled %}<div class="notice" role="status">Workout cancelled. Start again whenever you’re ready.</div>{% endif %}
   <div class="page-intro">
     <div><p class="eyebrow">YOUR TRAINING, IN FOCUS</p><h1>{% if session %}Workout {{ session.routine }}{% else %}Ready for your next session.{% endif %}</h1>
     <p class="intro-copy">{% if session and session.status == 'draft' %}Your usual numbers are here. Make today your own.{% elif session and session.status == 'completed' %}Another session in the books. Here’s what you recorded.{% elif session %}Your results are safe. Let’s finish saving them.{% else %}A familiar routine. A fresh start. Everything ready to go.{% endif %}</p></div>
@@ -51,7 +52,7 @@
         <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2><p>Adjust your numbers as you go. Use × to remove sets you didn’t do; Finish records everything remaining.</p>
         <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Anything to remember?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
         <div id="save-status" role="status" aria-live="polite">{% if session.status == 'completed' %}<span class="saved">Session complete{% if session.vault_saved %} · Saved to Obsidian{% endif %}</span>{% elif session.status == 'finalizing' %}<span class="save-error">{{ session.error or 'Save is pending. Retry to finish.' }}</span>{% else %}<span class="saved">Draft saved</span>{% endif %}</div>
-        {% if editable %}<button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="discard" class="text-button discard" formnovalidate>Discard this draft</button>
+        {% if editable %}<button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="cancel" class="secondary cancel-workout" formnovalidate>Cancel workout</button>
         {% elif session.status == 'finalizing' %}<button type="submit" name="action" value="retry" class="primary finish" formnovalidate>Retry Obsidian save</button><p class="helper">Your results are retained until the note is saved.</p>
         {% else %}<p class="helper">Your next workout is {{ suggested }}.</p>{% endif %}
         </div>

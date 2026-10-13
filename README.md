@@ -15,6 +15,11 @@ FastAPI, SQLite, DuckDB, and dbt for Analytics Engineering practice.
 - **Add set** records extra sets for an exercise without changing the routine template.
 - Publishes finished workouts as dated Markdown notes in your configured folder.
   Failed writes remain retryable; existing differing notes are never overwritten.
+- Cancel an unfinished workout with confirmation, then start again. Completed
+  history and Obsidian notes are preserved.
+- Dashboard shows weekly frequency, exercise trends, and summary metrics with
+  date-range, exercise, and weight/reps/load-volume filters. Insights update from
+  completed recordings without an analytics refresh.
 - Provides workout history and an explicit SQLite → DuckDB → dbt refresh.
 
 Desktop Chrome is the primary target. The app runs locally while its server is open.
@@ -89,6 +94,18 @@ Reloading resumes drafts. Same-date/same-routine requests reopen the existing
 session. Legacy defaults follow recorded order and label that assumption; uncertain
 historical planned-set identities remain unknown. Rescan notes with
 `uv run --env-file .env gym-import`; changed imported files are reported as conflicts.
+
+Use **Cancel workout** to end an unfinished draft without saving a completed note.
+Confirm cancellation to return to the workout screen; A/B stays based on the last
+completed session. You can cancel even if an input is unfinished or invalid.
+
+Open **Dashboard** for completed sessions, training days, performed numeric sets,
+weekly workout frequency, and recorded load volume. Choose an exercise, metric,
+and date range, then select **Update dashboard**. Top-set weight is paired with
+the reps of that same set; total reps and load volume include all performed sets
+for the exercise. Use total reps for bodyweight exercises. Pending imports appear
+after completion review; drafts, cancellations, skipped/removed sets, and therapy
+do not contribute to numeric exercise metrics.
 
 ## Analytics Engineering
 

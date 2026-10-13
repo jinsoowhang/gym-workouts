@@ -18,6 +18,9 @@
 - Workout status: draft, finalizing, completed, discarded, or review. Only
   completed sessions advance A/B and enter workout facts. Set status: pending,
   performed, skipped, removed, or unknown. Only performed numeric sets enter set facts.
+  Cancelling an unfinished draft sets `discarded`, with revision protection and
+  no completed-note publication or A/B advancement. Completed/finalizing workouts
+  cannot be cancelled through this action.
 - Stable session/set IDs and planned positions preserve ordering. Full-form updates
   require the current revision and exactly the session's own set IDs. Stale updates
   are rejected; finishing includes the latest input state.
@@ -36,6 +39,14 @@
 - Operational and warehouse schemas must match the declared snapshot contract.
   Every raw warehouse row carries snapshot ID and extraction timestamp. Only a
   fully manifested snapshot is eligible for transformations.
+- The dashboard reads operational recordings directly. Its selected date range
+  is inclusive, through the configured local current date. Sessions and training
+  days use completed sessions; exercise sets, reps, and load volume use performed
+  numeric rows only. Top-set weight is paired with the reps of the same recorded
+  set, taking more reps on equal weight. Changes compare earliest/latest sessions
+  in the range; one session has no comparison. Weekly buckets begin on Monday
+  and show at most the latest 12 weeks. Unperformed/absent exercises are not
+  converted to zero-valued exercise observations.
 
 ## Model grain and metrics
 

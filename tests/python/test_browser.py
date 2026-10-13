@@ -143,6 +143,33 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(areas).to_have_value("Ankle")
                 expect(second_area).to_have_value("Wrist")
                 expect(areas).to_have_attribute("readonly", "")
+                page.get_by_role("button", name="Start Workout A", exact=False).click()
+                cancel = page.get_by_role("button", name="Cancel workout", exact=True)
+                expect(cancel).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                page.get_by_role("spinbutton", name="Squat set 1 weight in lb").fill("")
+                page.once("dialog", lambda dialog: dialog.dismiss())
+                cancel.click()
+                expect(page.locator(".session-bar .pill")).to_have_text("In progress")
+                page.once("dialog", lambda dialog: dialog.accept())
+                cancel.click()
+                expect(
+                    page.get_by_text("Workout cancelled. Start again whenever you’re ready.")
+                ).to_be_visible()
+                expect(page.locator(".session-bar .pill")).to_have_text("Completed")
+                page.get_by_role("link", name="Dashboard", exact=True).click()
+                expect(
+                    page.get_by_role("heading", name="Your training, over time.")
+                ).to_be_visible()
+                page.get_by_label("Compare", exact=True).select_option("volume")
+                page.get_by_label("Date range", exact=True).select_option("0")
+                page.get_by_role("button", name="Update dashboard", exact=False).click()
+                expect(page.locator("#exercise-chart-title")).to_contain_text(
+                    "Load volume over time"
+                )
+                expect(page.get_by_role("link", name="Dashboard", exact=True)).to_have_attribute(
+                    "aria-current", "page"
+                )
                 assert not errors
                 browser.close()
         finally:

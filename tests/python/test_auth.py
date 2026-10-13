@@ -111,7 +111,7 @@ def complete_login(client, provider):
 
 def test_anonymous_requests_cannot_read_or_write_workouts(hosted):
     client, _factory, _provider = hosted
-    for path in ("/", "/history", "/workouts/anything"):
+    for path in ("/", "/history", "/dashboard", "/workouts/anything"):
         response = client.get(path)
         assert response.status_code == 303 and response.headers["location"] == "/login"
         assert response.headers["cache-control"] == "no-store"
@@ -136,6 +136,7 @@ def test_google_login_creates_secure_revocable_session(hosted):
     assert set(payload) == {"login"}
     assert client.get("/api/v1/state").status_code == 200
     assert client.get("/").status_code == 200
+    assert client.get("/dashboard").status_code == 200
     with factory() as db:
         row = db.scalar(select(LoginSession))
         assert len(row.id) == 64 and row.email == "owner@example.com"

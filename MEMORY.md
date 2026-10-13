@@ -25,6 +25,15 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
   Added rows have new IDs, increasing occurrence numbers, appended positions, and
   no template key. Cards group them under their exercise; notes retain their order
   and identity. New sessions restore the routine template's numeric set count.
+- Cancel workout confirms before ending a draft, using the existing discarded
+  state. It bypasses invalid unfinished form fields, preserves completed history,
+  publishes no note, and keeps A/B based on the last completion. Stale cancellation
+  and cancellation of completed/finalizing workouts are rejected.
+- Dashboard reads live operational data with date/exercise/metric filters. It
+  shows completed sessions, training days, performed numeric sets, load volume,
+  weekly frequency, and exercise weight/reps/volume trends. Top-set weight/reps
+  stay paired; drafts, cancellations, unreviewed imports, skipped/removed rows,
+  and therapy are excluded from numeric exercise metrics. No dbt refresh is needed.
 - SQLite owns lifecycle/results. Obsidian supplies imports and completed-note mirrors.
 - Durable writes recover after errors/restarts; differing existing notes are conflicts.
 - Unmarked imports require review unless an explicit historical cutoff is supplied.
@@ -80,8 +89,8 @@ VPS's existing Nginx Proxy Manager. Cloudflare Access/Tailscale is not required.
 port, with persistent SQLite and the synced workout folder. The hosted app admits
 only the verified email in private settings. Local mode keeps its existing flow.
 
-Direct Google OAuth is implemented and ready for publication; hosted deployment
-is still pending. It uses Authlib OIDC validation, PKCE, secure session cookies, hashed
+Direct Google OAuth is implemented; hosted deployment is still pending. It uses
+Authlib OIDC validation, PKCE, secure session cookies, hashed
 server-side sessions, a fixed 24-hour expiry, and logout revocation. Missing Google
 credentials fail closed. A new Alembic migration adds login sessions; apply it
 before running the updated app. All 66 Python/browser tests, Ruff, formatting,
@@ -139,3 +148,21 @@ export/import of unplanned sets. Numeric-looking area names remain compatible
 with the legacy note reader. A consistent backup preceded the row migration;
 live home/history/health and the split draft labels were verified. Synthetic
 desktop/mobile views had no horizontal overflow.
+
+Cancellation and Dashboard passed all 95 Python/browser tests, including
+confirmation dismiss/accept with an invalid input, all three metrics, empty and
+filtered history, bodyweight zeros, precision, and authenticated access. SVG charts
+fit desktop/mobile widths without cropping; the table scrolls inside its panel.
+The local app was restarted and health/workout/history/dashboard plus reps/volume
+filters returned HTTP 200. Read-only verification preserved the current draft.
+
+## GitHub publication — 2026-10-12
+
+Changes are grouped into independently verified commits for Google sign-in/VPS
+hosting, workout set/therapy row controls, and cancellation/dashboard insights.
+The complete release passed 95 Python/browser tests, eight dbt models and 35 data
+tests, Ruff, compilation, SQLFluff, whitespace, and public-file checks. Intermediate
+commits passed their 66-test and 83-test suites. Publication candidates passed
+Gitleaks scans and retain the GitHub noreply identity. Local settings, databases,
+screenshots, backups, and generated dbt `.user.yml` remain ignored. Publication
+does not deploy or cut over the VPS; local recording remains active.

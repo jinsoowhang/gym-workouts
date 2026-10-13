@@ -14,6 +14,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from gym_workouts.auth import configure_auth
 from gym_workouts.config import Settings
 from gym_workouts.contracts import SessionCommand, StartCommand
+from gym_workouts.dashboard import dashboard_data
 from gym_workouts.database import create_database
 from gym_workouts.services import ConflictError, WorkoutService
 
@@ -135,6 +136,13 @@ def create_app(settings=None):
             )
             return templates.TemplateResponse(request, "history.html", {"records": records})
 
+    @app.get("/dashboard", response_class=HTMLResponse)
+    def dashboard(request: Request, days: int = 90, exercise: str = "", metric: str = "weight"):
+        data = dashboard_data(
+            factory, service.today(), days=days, exercise_id=exercise, metric=metric
+        )
+        return templates.TemplateResponse(request, "dashboard.html", data)
+
     @app.get("/workouts/{session_id}", response_class=HTMLResponse)
     def saved_workout(request: Request, session_id: str):
         return templates.TemplateResponse(
@@ -164,7 +172,8 @@ def create_app(settings=None):
         try:
             current = service.get(session_id)
             edits = []
-            for row in current["sets"] if action not in ("retry", "discard") else []:
+            cancelling = action in ("discard", "cancel")
+            for row in current["sets"] if action not in ("retry", "discard", "cancel") else []:
                 edits.append(
                     {
                         "id": row["id"],
@@ -183,8 +192,10 @@ def create_app(settings=None):
             command = SessionCommand(
                 revision=int(form["revision"]),
                 sets=edits,
-                notes=str(form.get("notes", "")),
-                therapy_areas=str(form["therapy_areas"]) if "therapy_areas" in form else None,
+                notes="" if cancelling else str(form.get("notes", "")),
+                therapy_areas=str(form["therapy_areas"])
+                if not cancelling and "therapy_areas" in form
+                else None,
                 action=action,
             )
             workout = service.command(session_id, command)
@@ -210,11 +221,13 @@ def create_app(settings=None):
                     "total": sum(r["state"] != "removed" for r in workout["sets"]),
                 },
             )
-        if action == "discard":
+        if action in ("discard", "cancel"):
+            if not request.headers.get("hx-request"):
+                return RedirectResponse("/", status_code=303)
             return templates.TemplateResponse(
                 request,
                 "workout.html",
-                workout_context(service),
+                workout_context(service) | {"cancelled": True},
                 headers={"HX-Retarget": "#workout", "HX-Reswap": "outerHTML"},
             )
         return templates.TemplateResponse(

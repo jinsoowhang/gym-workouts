@@ -97,10 +97,50 @@
   labels had their own rows. App restarted with the final code; refresh to use it.
 - Existing uncommitted work remains intact; no commit or deployment performed.
 
+## Workout cancellation and dashboard
 
-## Publication preparation
+- Replaced the buried draft-discard control with a visible Cancel workout button
+  and confirmation. Cancellation retains the existing discarded lifecycle state,
+  protects revisions, skips invalid unfinished inputs, and publishes no note.
+  Completed history and A/B ordering are preserved; users can start again.
+- Added Dashboard navigation and a page with completed-session/training-day/set/
+  load-volume totals, weekly frequency, an exercise trend chart, and an exercise
+  overview. Date-range, exercise, and weight/reps/volume selectors control the view.
+- Dashboard reads live operational data. Completed sessions contribute to session
+  counts; only performed numeric rows contribute to exercise metrics. Top-set
+  weight pairs with that set's reps. Missing exercise observations are omitted;
+  a single observation has no first-to-latest change. Review imports show a notice.
+- Added responsive SVG charts with point details, readable weekly labels, and
+  complete timelines on mobile. The exercise table scrolls within its panel.
+  Navigation wraps to fit the additional tab on narrow screens.
+- Added regression coverage for cancellation, stale/completed cancellation,
+  metric arithmetic, status/type exclusions, date boundaries, empty ranges/history,
+  decimal weights, bodyweight zeros, filters, and dashboard authentication.
+  Browser flows cover confirmation dismiss/accept and interactive dashboard filters.
+- Final verification: all 95 Python/browser tests passed, with Ruff lint/format,
+  whitespace, and public-file checks passing. Synthetic desktop/mobile dashboards
+  were reviewed; both charts fit without cropping or page overflow. Point values
+  retain precise data while axis labels use compact units where needed.
+- Restarted the local app. Health/workout/history/dashboard and reps/volume filter
+  pages returned HTTP 200. State before/after read-only checks was identical; the
+  user's current draft was not cancelled or completed during verification.
+- No new schema migration was needed. Existing uncommitted work remains intact;
+  no commit or deployment performed.
 
-The Google sign-in implementation is committed separately from these workout UI
-changes. UI verification includes all 83 Python/browser tests, while the complete
-release also passed eight dbt models and 35 dbt data tests. Local settings,
-databases, screenshots, backups, and dbt machine IDs stay ignored.
+## GitHub publication
+
+- User authorized committing and pushing the pending project changes to the
+  existing GitHub remote. No VPS deployment or database cutover was requested.
+- Prepared isolated publication commits for owner-only Google sign-in/VPS
+  hosting, session set controls/individual therapy rows, and cancellation/dashboard.
+  The working app and private runtime files were preserved during preparation.
+- The complete check script passed 95 Python/browser tests, eight dbt models and
+  35 dbt data tests, Ruff lint/format, compilation, SQLFluff, and public-file checks.
+  Intermediate sign-in and workout-row commits passed their independent 66-test
+  and 83-test suites, plus lint/format and publication-file checks.
+- Gitleaks, verified against the official release checksum, found no secrets in
+  the publication candidates. Private configuration/data/reports/backups remain
+  ignored. Added the generated dbt machine-settings `.user.yml` to Git exclusions.
+- Publication uses the existing GitHub noreply identity and normal fast-forward
+  pushes to main. Hosting credentials, public routing, real Google sign-in, and
+  the active VPS database cutover remain pending.

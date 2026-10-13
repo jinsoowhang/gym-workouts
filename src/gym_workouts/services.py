@@ -149,7 +149,7 @@ class WorkoutService:
                 if claimed.rowcount != 1:
                     raise ConflictError("A newer edit exists. Reload before changing this workout.")
                 workout.revision = command.revision + 1
-                if command.action != "discard":
+                if command.action not in ("discard", "cancel"):
                     self._apply_edits(workout, command)
                 if command.action.startswith(
                     ("remove:", "restore:", "remove-set:", "restore-set:")
@@ -177,7 +177,7 @@ class WorkoutService:
                     for row in workout.rows:
                         if row.state == "pending":
                             row.state = "performed"
-                elif command.action == "discard":
+                elif command.action in ("discard", "cancel"):
                     workout.status = "discarded"
                 elif command.action == "finish":
                     if any(r.state in ("pending", "unknown") for r in workout.rows):

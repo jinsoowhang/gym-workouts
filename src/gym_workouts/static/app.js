@@ -3,6 +3,14 @@
 let changes = 0;
 let acknowledged = 0;
 
+document.addEventListener("submit", (event) => {
+  if (event.target.id !== "session-form" || event.submitter?.value !== "cancel") return;
+  if (!window.confirm("Cancel this workout? It won’t be added to history or saved to Obsidian.")) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}, true);
+
 // HTMX owns requests; keep inputs in place and acknowledge the submitted edit generation.
 document.addEventListener("htmx:configRequest", (event) => {
   if (event.detail.elt.id !== "session-form") return;
