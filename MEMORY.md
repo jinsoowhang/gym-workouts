@@ -21,6 +21,8 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
   comma-separated `GYM_THERAPY_AREAS` for initial defaults. Old combined fields are
   converted to rows; unlabeled historical activities remain unlabeled. Labels are
   excluded from analytics; session `therapy_areas` is a compatibility summary.
+- The Physical Therapy card links to Laina Health in a new tab. User-specified
+  label capitalization belongs in private runtime data and initial settings.
 - Add set creates a session-only numeric row using the latest included set's values.
   Added rows have new IDs, increasing occurrence numbers, appended positions, and
   no template key. Cards group them under their exercise; notes retain their order
@@ -141,6 +143,11 @@ Indicators include the signed difference and unit below the field (an invented
 without floating-point noise. Accessible descriptions identify the amount,
 baseline, and unit. This is presentation only;
 default values, autosave requests, and stored workout results retain their behavior.
+
+Publication preparation passed all 95 Python/browser tests, eight dbt models and
+35 data tests, Ruff, JavaScript syntax, compilation, SQLFluff, and public-file
+checks. Warm-up and numeric-indicator commits each passed 45 scoped tests from
+independent staged source snapshots. Private settings and runtime data stay local.
 
 ## Local UI testing — 2026-10-12
 

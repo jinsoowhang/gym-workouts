@@ -64,3 +64,28 @@
   Ruff lint/format, JavaScript syntax, whitespace, and public-file checks passed.
   Windows verified the live page and updated script. Verification used temporary
   workout data; refresh the existing page after its current edits have saved.
+
+## Physical therapy link and label capitalization
+
+- Added an Open Laina Health link inside the Physical Therapy card. It opens the
+  supplied app URL in a separate tab with the same external-link protections as
+  the warm-up link.
+- Changed the requested current therapy label to title case through the existing
+  revision-protected save API and matched its private initial-default setting.
+  Compared the saved session against the expected edit: workout values, other
+  labels, and lifecycle state were preserved. Private labels remain untracked.
+- Read-only live HTML verification confirmed the link appears exactly once inside
+  Physical Therapy, opens in a new tab, and the requested label is in title case.
+
+## GitHub publication
+
+- User authorized committing and pushing this session's changes to the existing
+  origin/main. Grouped the warm-up video, numeric change indicators, and physical
+  therapy link into separate commits, each with its memory and session notes.
+- Full release verification passed all 95 Python/browser tests, eight dbt models
+  and 35 data tests, Ruff lint/format, JavaScript syntax, compilation, SQLFluff,
+  whitespace, and public-file checks. Warm-up and numeric-indicator snapshots each
+  passed 45 scoped tests independently before their commits.
+- Used invented numeric examples in publishable documentation. Personal therapy
+  label changes, local settings, workout data, logs, screenshots, and backups stay
+  ignored. Publication uses the existing GitHub noreply identity.
