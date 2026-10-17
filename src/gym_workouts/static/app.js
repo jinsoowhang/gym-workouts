@@ -3,6 +3,27 @@
 let changes = 0;
 let acknowledged = 0;
 
+function updateValueChange(input) {
+  const indicator = document.getElementById(input.getAttribute("aria-describedby"));
+  const baseline = Number(input.dataset.default);
+  const current = input.valueAsNumber;
+  const direction = input.dataset.default.trim() !== "" && input.validity.valid &&
+    Number.isFinite(baseline) && Number.isFinite(current) ? Math.sign(current - baseline) : 0;
+  indicator.hidden = direction === 0;
+  indicator.classList.toggle("increase", direction > 0);
+  indicator.classList.toggle("decrease", direction < 0);
+  const amount = Number(Math.abs(current - baseline).toFixed(4));
+  const change = direction ? `${direction > 0 ? "+" : "-"}${amount} ${input.dataset.unit}` : "";
+  indicator.firstElementChild.textContent = direction ? `${direction > 0 ? "↑" : "↓"} ${change}` : "";
+  const description = direction ? `${direction > 0 ? "Increased" : "Decreased"} by ${amount} ${input.dataset.unit} from default: ${input.dataset.default} ${input.dataset.unit}` : "";
+  indicator.lastElementChild.textContent = description;
+  indicator.title = description;
+}
+
+document.addEventListener("htmx:load", () => {
+  document.querySelectorAll(".set-input input[data-default]").forEach(updateValueChange);
+});
+
 document.addEventListener("submit", (event) => {
   if (event.target.id !== "session-form" || event.submitter?.value !== "cancel") return;
   if (!window.confirm("Cancel this workout? It won’t be added to history or saved to Obsidian.")) {
@@ -21,6 +42,7 @@ document.addEventListener("htmx:configRequest", (event) => {
 
 document.addEventListener("input", (event) => {
   if (!event.target.closest("#session-form")) return;
+  if (event.target.matches(".set-input input[data-default]")) updateValueChange(event.target);
   changes += 1;
   const receipt = document.getElementById("save-status");
   if (receipt) receipt.textContent = "Unsaved changes…";

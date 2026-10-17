@@ -130,6 +130,18 @@ Windows Start-Process. A server backgrounded inside an agent shell stopped after
 the chat turn despite nohup. The Windows launcher gives the server its own window;
 verify `/health` and the workout page from Windows, and keep that window open.
 
+## Weight and rep indicators — 2026-10-16
+
+Each numeric field compares its current value with its own saved session default.
+Green up arrows indicate increases and red down arrows indicate decreases; equal,
+blank, invalid, and removed fields show no arrow. Indicators update immediately
+and reinitialize after HTMX replacements and reloads, including completed results.
+Indicators include the signed difference and unit below the field (an invented
+12 → 15 lb example shows ↑ +3 lb), rounded to the supported four decimal places
+without floating-point noise. Accessible descriptions identify the amount,
+baseline, and unit. This is presentation only;
+default values, autosave requests, and stored workout results retain their behavior.
+
 ## Local UI testing — 2026-10-12
 
 The local database was backed up using SQLite's backup API before applying the

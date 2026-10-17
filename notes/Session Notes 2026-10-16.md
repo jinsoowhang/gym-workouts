@@ -27,3 +27,40 @@
   Start-Process so the server runs in a separate user-visible window.
 - Verified the health endpoint and workout page from Windows, including the warm-up
   embed. Keep the Gym Workouts server window open while recording workouts.
+
+## Weight and rep change indicators
+
+- Added individual green up / red down arrow badges beside numeric fields,
+  comparing each value with its existing displayed session default. Matching,
+  blank, invalid, and removed values have no arrow. Added screen reader descriptions
+  with the comparison baseline and unit; arrow shapes distinguish direction too.
+- Indicators update immediately on input and initialize on HTMX loads, including
+  reloads and form replacements. Kept numeric input behavior and autosave intact.
+  Versioned both app assets so a refresh loads the new JavaScript and styles.
+- All 45 scoped browser/workflow/session-row tests passed, including both HTMX
+  settling delays. Ruff lint/format, JavaScript syntax, whitespace, and public-file
+  checks passed. Windows returned HTTP 200 with comparison fields and updated
+  asset URLs; no server restart was required for these template/static changes.
+- Additional synthetic browser checks passed for both directions on weight and
+  reps, equal decimal representations, 0.0001 lb changes, zero baselines, invalid
+  values, autosave/reload, remove/Undo, extra sets, and completed results. Desktop
+  and mobile layouts had no horizontal overflow; reviewed the mobile arrow badges.
+  All interactive verification used temporary workouts, not the user's draft.
+
+## Numeric differences beside arrows
+
+- Added the signed difference and unit to each arrow. With invented values, a
+  default of 12 lb changed to 15 lb shows ↑ +3 lb, and 12 lb changed to 10 lb
+  shows ↓ -2 lb. Rep fields show rep differences independently. Equal and invalid
+  values remain hidden.
+- Moved indicators below their inputs with aligned input rows and wrapping for
+  long differences. Rounded differences to the supported four decimal places to
+  avoid floating-point display noise. Updated accessible descriptions and asset
+  versions. Stored defaults and workout results remain unchanged.
+- Verification: both desktop browser workflows passed. Synthetic browser checks
+  covered second-set weight changes, decreases, decimal precision,
+  reps, invalid/equal values, reloads, removal/Undo, and completed results. Mobile
+  and desktop layouts fit without horizontal overflow, including large differences.
+  Ruff lint/format, JavaScript syntax, whitespace, and public-file checks passed.
+  Windows verified the live page and updated script. Verification used temporary
+  workout data; refresh the existing page after its current edits have saved.
