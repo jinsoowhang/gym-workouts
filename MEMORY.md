@@ -114,6 +114,22 @@ no secrets found by Gitleaks, and no private login address in commit metadata.
 Local recording remains active while Google Web OAuth setup and the VPS cutover
 are pending. Keep the GitHub noreply identity and private settings out of publication.
 
+## Workout warm-up — 2026-10-16
+
+Ready and draft workouts show a warm-up video card before the routine/exercises
+for both A and B. It embeds the supplied YouTube video using youtube-nocookie.com
+and offers a new-tab YouTube link. The player has no autoplay; warm-up is a visual
+guide, without a separate recorded completion state. Completed history is unchanged.
+CSP permits frames only from the embed host. The stylesheet URL is versioned to
+refresh cached styles. All 95 Python/browser tests passed; synthetic A/B desktop
+and mobile checks verified placement, reloads, and no horizontal overflow. Actual
+external YouTube playback was not exercised by verification.
+
+For interactive use, start the Windows `Start Gym Workouts.bat` launcher through
+Windows Start-Process. A server backgrounded inside an agent shell stopped after
+the chat turn despite nohup. The Windows launcher gives the server its own window;
+verify `/health` and the workout page from Windows, and keep that window open.
+
 ## Local UI testing — 2026-10-12
 
 The local database was backed up using SQLite's backup API before applying the

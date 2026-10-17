@@ -100,7 +100,8 @@ def create_app(settings=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
-            "img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+            "img-src 'self' data:; frame-src https://www.youtube-nocookie.com; "
+            "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
         )
         return response
 

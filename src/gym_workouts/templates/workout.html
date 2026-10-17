@@ -7,6 +7,12 @@
     <div class="date-block"><span class="eyebrow">{% if session %}SESSION DATE{% else %}TODAY{% endif %}</span><strong>{{ session.date if session else today }}</strong><span>Weight unit: lb</span></div>
   </div>
   {% if review %}<div class="notice">{{ review|length }} imported note(s) need completion review. <a href="/history">Review history</a></div>{% endif %}
+  {% if ready and (not session or session.status == 'draft') %}
+    <section class="warmup-card" aria-labelledby="warmup-title">
+      <div><p class="eyebrow">START HERE · WARM-UP</p><h2 id="warmup-title">Your usual warm-up.</h2><p>Follow along with your video before starting your sets.</p><a href="https://www.youtube.com/watch?v=1e528F0pYPg" target="_blank" rel="noopener noreferrer">Open warm-up on YouTube <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></div>
+      <iframe src="https://www.youtube-nocookie.com/embed/1e528F0pYPg" title="Workout warm-up video" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </section>
+  {% endif %}
   {% if not ready %}
     <div class="empty-state"><h2>Your routines are almost ready.</h2><p>Initialize your workout imports using the setup steps in the project README, then reload this page.</p></div>
   {% elif not session %}
