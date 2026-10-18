@@ -2,10 +2,34 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gym_workouts.database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    email: Mapped[str | None] = mapped_column(String, unique=True)
+    google_subject: Mapped[str | None] = mapped_column(String, unique=True)
+    vault_owner: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    __table_args__ = (
+        Index(
+            "uq_users_vault_owner", "vault_owner", unique=True, sqlite_where=text("vault_owner = 1")
+        ),
+    )
 
 
 class Exercise(Base):
@@ -19,6 +43,7 @@ class Exercise(Base):
 class RoutineSet(Base):
     __tablename__ = "routine_sets"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     routine: Mapped[str] = mapped_column(String)
     position: Mapped[int] = mapped_column(Integer)
     exercise_id: Mapped[str] = mapped_column(ForeignKey("exercises.id"))
@@ -27,7 +52,7 @@ class RoutineSet(Base):
     reps: Mapped[int | None] = mapped_column(Integer)
     exercise: Mapped[Exercise] = relationship()
     __table_args__ = (
-        UniqueConstraint("routine", "position"),
+        UniqueConstraint("user_id", "routine", "position"),
         CheckConstraint("routine IN ('A', 'B')"),
         CheckConstraint("weight IS NULL OR weight >= 0"),
         CheckConstraint("reps IS NULL OR reps >= 0"),
@@ -37,6 +62,7 @@ class RoutineSet(Base):
 class WorkoutSession(Base):
     __tablename__ = "workout_sessions"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     routine: Mapped[str] = mapped_column(String)
     session_date: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="draft")
@@ -112,6 +138,7 @@ class VaultWrite(Base):
 class LoginSession(Base):
     __tablename__ = "login_sessions"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     subject: Mapped[str] = mapped_column(String)
     email: Mapped[str] = mapped_column(String)
     expires_at: Mapped[int] = mapped_column(Integer, index=True)

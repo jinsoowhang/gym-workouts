@@ -18,6 +18,22 @@ vault writes. SQLAlchemy repositories isolate persistence; services handle worko
 rules and publication; FastAPI transports commands and renders Jinja/HTMX fragments.
 Alembic owns operational schema changes.
 
+Workout sessions and routine sets have a required `user_id` referencing a stable
+user record. The existing dataset belongs to the configured vault owner. Hosted
+requests take their user identity from a validated login session; repositories,
+history, defaults, drafts, edits, and dashboard queries scope access to that user.
+Another user's workout ID returns the same not-found response as a missing ID.
+The owner is initially identified by the configured verified email and then bound
+to Google's stable subject. Changing the allowed email cannot transfer ownership.
+
+Registration remains closed to the configured owner. Future onboarding will use
+invitations and editable generic starter routines with empty history, rather than
+copying the owner's workouts, templates, loads, or therapy defaults. Invitations
+and starter-routine editing are not implemented in this ownership foundation.
+Obsidian import/publication and private warehouse snapshots belong exclusively
+to the vault owner. Additional users must get website-only recording before their
+access is enabled; they cannot publish into the owner's workout folder.
+
 Only a finished session is published as a dated Obsidian note. Results are first
 persisted with a pending write; file publication is then acknowledged in SQLite.
 Interrupted acknowledgement is recovered by matching session identity/content.

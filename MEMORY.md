@@ -91,30 +91,63 @@ VPS's existing Nginx Proxy Manager. Cloudflare Access/Tailscale is not required.
 port, with persistent SQLite and the synced workout folder. The hosted app admits
 only the verified email in private settings. Local mode keeps its existing flow.
 
-Direct Google OAuth is implemented; hosted deployment is still pending. It uses
+Direct Google OAuth is implemented and deployed as of 2026-10-18. It uses
 Authlib OIDC validation, PKCE, secure session cookies, hashed
 server-side sessions, a fixed 24-hour expiry, and logout revocation. Missing Google
 credentials fail closed. A new Alembic migration adds login sessions; apply it
 before running the updated app. All 66 Python/browser tests, Ruff, formatting,
 whitespace checks, and the public-file policy passed at this checkpoint.
 
-A private VPS staging instance is running. The existing Syncthing vault includes
-the workout folder and can sync completed notes back to the PC. The approved Gmail
-address is saved only in private settings. That staging instance still runs the
-earlier loopback-only deployment; no public app route has been added. A Google
-Web application OAuth client is required next; existing Desktop OAuth credentials
-cannot supply web sign-in. Public routing, real Google sign-in verification, and
-final database cutover remain pending. Deployment details are recorded in the
-ignored `.secrets/vps-deployment-status.json`; see `docs/vps-deployment.md` for
-the portable setup. Stop the local recorder and take a final consistent SQLite
-backup before switching active recording to the VPS. Never sync live SQLite.
+The VPS now runs the current app on the proxy's private Docker network with no
+published app port. An HTTPS proxy route and managed certificate are installed.
+The existing Syncthing vault includes the workout folder and can sync completed
+notes back to the PC. The approved Gmail address and Google Web application
+credentials are saved only in private settings. The local server was confirmed
+stopped before a consistent SQLite snapshot replaced the older staging database;
+all remote completed workouts were present in that snapshot. Never sync live SQLite.
+Deployment details are recorded in the ignored `.secrets/vps-deployment-status.json`;
+see `docs/vps-deployment.md` for the portable setup. Actual owner sign-in and an
+authenticated recording with note sync still need user verification.
 
 The published VPS changes passed an independent GitHub clone audit of all six
 reachable commits and 106 distinct file versions: no private deployment identifiers,
 no secrets found by Gitleaks, and no private login address in commit metadata.
 
-Local recording remains active while Google Web OAuth setup and the VPS cutover
-are pending. Keep the GitHub noreply identity and private settings out of publication.
+The local recorder remains stopped after the VPS database cutover. Use the hosted
+app for subsequent recording once owner sign-in is confirmed; do not record into
+both databases. The Windows launcher still opens local mode pending authenticated
+recording and note-sync verification. Keep the GitHub noreply identity and private
+settings out of publication.
+
+## Account ownership — 2026-10-18
+
+The deployed schema now has users and required user ownership on workout sessions,
+personal routine sets, and login sessions. The migration assigns all existing
+workouts and drafts to the configured owner, preserves original workout data,
+and revokes old login sessions. The first fresh verified Google login binds the
+owner's stable Google subject; changing the configured email cannot transfer data.
+Owner identity stays in private settings and is not hardcoded in source or notes.
+
+Repositories, defaults, active drafts, history, dashboard queries, review actions,
+and session commands are scoped to the authenticated user. Foreign workout IDs
+return not found. Obsidian import/publication/recovery and analytics extracts are
+exclusive to the vault owner. Snapshots exclude other users' sessions, sets,
+templates, publications, and exercises, and retain compatible warehouse columns
+without user emails, Google subjects, or account IDs.
+
+Registration remains closed. The accepted future direction is invitations and
+editable generic starter routines with empty history; invitation flows, routine
+editing, and website-only completion for additional users remain future work.
+Do not enable additional accounts before those workflows are implemented.
+
+The local inactive database and hosted database were backed up and migrated
+independently. The live server has exactly one account and all sessions/templates
+belong to it. Migration rehearsal on a private copy and live before/after row
+comparisons preserved preexisting data. Verification passed 103 Python/browser
+tests, eight dbt models and 35 data tests, Ruff, formatting, SQLFluff, compilation,
+whitespace, public-file policy, and live HTTPS/authentication-boundary checks.
+The owner must sign in again after this migration; actual owner sign-in and
+authenticated recording with note sync remain manual checks.
 
 ## Workout warm-up — 2026-10-16
 

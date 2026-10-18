@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 
 from gym_workouts.app import create_app
 from gym_workouts.auth import COOKIE_NAME
-from gym_workouts.models import LoginSession
+from gym_workouts.models import LoginSession, User, WorkoutSession
 
 
 @pytest.fixture
@@ -215,3 +215,88 @@ def test_missing_google_credentials_keep_hosted_app_closed(configured):
         assert "Sign-in setup is in progress" in client.get("/login").text
         assert client.get("/auth/login").status_code == 503
         assert client.get("/api/v1/state").status_code == 401
+
+
+def test_owner_cannot_read_or_change_another_users_workout(hosted):
+    client, factory, provider = hosted
+    with factory.begin() as db:
+        db.add(User(id="other-user", email="guest@example.com"))
+        db.flush()
+        db.add(
+            WorkoutSession(
+                id="private-other-session",
+                user_id="other-user",
+                routine="A",
+                session_date="2026-10-11",
+                created_at="2026-10-11T00:00:00",
+                status="review",
+                notes="Private guest workout marker",
+            )
+        )
+    assert complete_login(client, provider).status_code == 303
+    for path in ("/workouts/private-other-session", "/api/v1/sessions/private-other-session"):
+        assert client.get(path).status_code == 404
+    assert client.post("/review/private-other-session").status_code == 404
+    assert (
+        client.post(
+            "/sessions/private-other-session/command", data={"action": "retry", "revision": 0}
+        ).status_code
+        == 404
+    )
+    assert (
+        client.post(
+            "/api/v1/sessions/private-other-session/command",
+            json={"action": "cancel", "revision": 0},
+        ).status_code
+        == 404
+    )
+    for path in ("/", "/history", "/dashboard", "/api/v1/state"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert "Private guest workout marker" not in response.text
+        assert "private-other-session" not in response.text
+    response = client.post("/api/v1/sessions", json={"routine": "A", "user_id": "other-user"})
+    assert response.status_code == 200
+    with factory() as db:
+        login = db.scalar(select(LoginSession))
+        assert db.get(WorkoutSession, response.json()["id"]).user_id == login.user_id
+        assert db.get(WorkoutSession, "private-other-session").status == "review"
+
+
+def test_google_subject_cannot_be_replaced_even_with_the_same_email(hosted):
+    client, factory, provider = hosted
+    assert complete_login(client, provider).status_code == 303
+    assert client.post("/auth/logout").status_code == 303
+    provider["claims"] = {"sub": "different-google-account"}
+    assert complete_login(client, provider).status_code == 403
+    assert client.get("/api/v1/state").status_code == 401
+    with factory() as db:
+        owner = db.scalar(select(User).where(User.vault_owner.is_(True)))
+        assert owner.google_subject == "synthetic-google-owner"
+        assert db.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_existing_other_users_still_cannot_sign_in(hosted):
+    client, factory, provider = hosted
+    with factory.begin() as db:
+        db.add(User(id="invited-later", email="guest@example.com", google_subject="guest-subject"))
+    provider["claims"] = {"email": "guest@example.com", "sub": "guest-subject"}
+    assert complete_login(client, provider).status_code == 403
+    with factory() as db:
+        assert db.scalar(select(func.count()).select_from(LoginSession)) == 0
+
+
+def test_google_subject_already_bound_to_another_user_is_rejected(hosted):
+    client, factory, provider = hosted
+    with factory.begin() as db:
+        db.add(
+            User(
+                id="another-user",
+                email="guest@example.com",
+                google_subject="synthetic-google-owner",
+            )
+        )
+    assert complete_login(client, provider).status_code == 403
+    assert client.get("/api/v1/state").status_code == 401
+    with factory() as db:
+        assert db.scalar(select(func.count()).select_from(LoginSession)) == 0

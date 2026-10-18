@@ -228,6 +228,8 @@ def test_migration_splits_existing_areas_and_preserves_row_state(configured, sta
             {"state": state, "id": therapy["id"]},
         )
     migrate(settings)
+    # The downgrade removed users; restart with the newly migrated owner identity.
+    service = WorkoutService(factory, settings)
     migrated = service.get(workout["id"])
     areas = [row for row in migrated["sets"] if row["type"] == "activity"]
     assert [row["activity_area"] for row in areas] == ["Ankle", "elbow"]

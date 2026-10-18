@@ -18,6 +18,7 @@ from gym_workouts.importer import import_workouts
 def migrate(settings):
     config = Config(str(ROOT / "alembic.ini"))
     config.attributes["database_path"] = settings.database_path
+    config.attributes["owner_email"] = settings.allowed_email.strip().lower()
     command.upgrade(config, "head")
 
 

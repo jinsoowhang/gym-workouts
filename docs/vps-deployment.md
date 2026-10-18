@@ -5,6 +5,14 @@ Google sign-in is part of the app. A verified Google identity must match the
 single approved email address before any workout page or API is available.
 Cloudflare can continue providing DNS for the domain. Zero Trust is not required.
 
+The ownership migration assigns existing sessions and personal routine templates
+to this configured account, including current drafts. Google sign-in binds its
+stable subject on the first successful login. Changing `GYM_ALLOWED_EMAIL` after
+ownership is assigned fails startup rather than transferring private workouts.
+Local mode uses the same persisted owner without requiring a Google login.
+Public registrations remain closed; invitations and generic starter routines are
+planned for later. Obsidian sync remains exclusive to the configured vault owner.
+
 ## Private settings and Google client
 
 Create a private `.env` on the VPS from `deploy/.env.example`. Set the hostname,
@@ -66,8 +74,10 @@ docker compose --env-file .env -f deploy/compose.yml run --rm gym /app/.venv/bin
 docker compose --env-file .env -f deploy/compose.yml up -d --remove-orphans gym
 ```
 
-The login-session migration adds a separate table and preserves existing workout
-records. Health checks use `/health` inside the container.
+The ownership migration rebuilds SQLite tables transactionally, verifies foreign
+keys, and preserves workout records. Stop the app and take a consistent SQLite
+backup before applying it. Existing login sessions are revoked; sign in again
+after deployment. Health checks use `/health` inside the container.
 
 ## HTTPS proxy and cutover
 

@@ -18,6 +18,7 @@ from gym_workouts.models import (
     WorkoutSession,
     WorkoutSet,
 )
+from gym_workouts.users import owner_user_id
 
 
 def identity(value: str) -> str:
@@ -43,6 +44,7 @@ def ensure_exercise(db, name):
 
 
 def import_workouts(factory, workout_dir, legacy_through=None):
+    user_id = owner_user_id(factory)
     if legacy_through is not None:
         date.fromisoformat(legacy_through)
     if not workout_dir.is_dir():
@@ -76,6 +78,7 @@ def import_workouts(factory, workout_dir, legacy_through=None):
                     db.add(
                         RoutineSet(
                             id=key,
+                            user_id=user_id,
                             routine=routine,
                             position=row.position,
                             exercise_id=ensure_exercise(db, row.name),
@@ -94,7 +97,7 @@ def import_workouts(factory, workout_dir, legacy_through=None):
                     )
                 )
         db.flush()
-        templates = list(db.scalars(select(RoutineSet)))
+        templates = list(db.scalars(select(RoutineSet).where(RoutineSet.user_id == user_id)))
         template_counts = Counter((r.routine, r.exercise_id) for r in templates)
         keys = {(r.routine, r.exercise_id, r.occurrence): r.id for r in templates}
         for path in sorted(workout_dir.rglob("*.md")):
@@ -133,6 +136,7 @@ def import_workouts(factory, workout_dir, legacy_through=None):
                 continue
             workout = WorkoutSession(
                 id=session_id,
+                user_id=user_id,
                 routine=routine,
                 session_date=session_date,
                 status="completed" if completed else "review",

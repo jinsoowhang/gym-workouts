@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from gym_workouts.models import WorkoutSession, WorkoutSet
+from gym_workouts.users import owner_user_id
 
 RANGES = {
     30: "Last 30 days",
@@ -69,7 +70,8 @@ def exercise_chart(points, metric):
     }
 
 
-def dashboard_data(factory, today, *, days=90, exercise_id="", metric="weight"):
+def dashboard_data(factory, today, *, user_id=None, days=90, exercise_id="", metric="weight"):
+    user_id = user_id or owner_user_id(factory)
     if days not in RANGES or metric not in METRICS:
         raise ValueError("Choose a dashboard date range and metric from the available options")
     end = date.fromisoformat(today)
@@ -80,6 +82,7 @@ def dashboard_data(factory, today, *, days=90, exercise_id="", metric="weight"):
                 select(WorkoutSession)
                 .where(
                     WorkoutSession.status.in_(["completed", "review"]),
+                    WorkoutSession.user_id == user_id,
                     WorkoutSession.session_date <= today,
                 )
                 .options(selectinload(WorkoutSession.rows).selectinload(WorkoutSet.exercise))

@@ -10,11 +10,12 @@ from authlib.integrations.starlette_client import OAuth
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from joserfc.errors import JoseError
-from sqlalchemy import delete
+from sqlalchemy import delete, or_, update
+from sqlalchemy.exc import IntegrityError
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 
-from gym_workouts.models import LoginSession
+from gym_workouts.models import LoginSession, User
 
 COOKIE_NAME = "__Host-gym_session"
 SESSION_SECONDS = 24 * 60 * 60
@@ -24,7 +25,7 @@ def session_id(token):
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def configure_auth(app, settings, factory, templates):
+def configure_auth(app, settings, factory, templates, owner_id):
     app.state.auth_enabled = settings.auth_enabled
     if not settings.auth_enabled:
         return
@@ -46,12 +47,17 @@ def configure_auth(app, settings, factory, templates):
             return False
         with factory.begin() as db:
             login = db.get(LoginSession, session_id(token))
+            user = db.get(User, login.user_id) if login is not None else None
             if (
                 login is not None
+                and user is not None
+                and user.id == owner_id
                 and login.expires_at > time.time()
                 and login.email == settings.allowed_email
+                and user.email == settings.allowed_email
+                and user.google_subject == login.subject
             ):
-                return True
+                return user.id
             if login is not None:
                 db.delete(login)
         request.session.pop("login", None)
@@ -59,7 +65,8 @@ def configure_auth(app, settings, factory, templates):
 
     @app.middleware("http")
     async def login_required(request, call_next):
-        request.state.authenticated = ready and await run_in_threadpool(authenticated, request)
+        request.state.user_id = await run_in_threadpool(authenticated, request) if ready else None
+        request.state.authenticated = bool(request.state.user_id)
         public = request.url.path in {"/health", "/login", "/auth/login", "/auth/callback"}
         if (
             not request.state.authenticated
@@ -120,18 +127,39 @@ def configure_auth(app, settings, factory, templates):
             or not isinstance(claims.get("email"), str)
             or claims["email"].casefold() != settings.allowed_email
             or not claims.get("sub")
+            or not isinstance(claims.get("sub"), str)
         ):
             request.session.clear()
             return login_page(request, "This Google account does not have access.", 403)
         opaque = secrets.token_urlsafe(32)
         old = request.session.get("login")
         with factory.begin() as db:
+            # A verified email can claim the owner once; future logins must match
+            # Google's stable subject rather than transferring workouts by email.
+            try:
+                bound = db.execute(
+                    update(User)
+                    .where(
+                        User.id == owner_id,
+                        User.email == settings.allowed_email,
+                        or_(User.google_subject.is_(None), User.google_subject == claims["sub"]),
+                    )
+                    .values(google_subject=claims["sub"])
+                )
+            except IntegrityError:
+                db.rollback()
+                request.session.clear()
+                return login_page(request, "This Google account does not have access.", 403)
+            if bound.rowcount != 1:
+                request.session.clear()
+                return login_page(request, "This Google account does not have access.", 403)
             db.execute(delete(LoginSession).where(LoginSession.expires_at <= time.time()))
             if isinstance(old, str):
                 db.execute(delete(LoginSession).where(LoginSession.id == session_id(old)))
             db.add(
                 LoginSession(
                     id=session_id(opaque),
+                    user_id=owner_id,
                     subject=claims["sub"],
                     email=settings.allowed_email,
                     expires_at=int(time.time()) + SESSION_SECONDS,

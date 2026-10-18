@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import copy
 from datetime import UTC, datetime
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -12,6 +13,7 @@ from gym_workouts.contracts import SessionCommand, format_weight, split_therapy_
 from gym_workouts.importer import checksum
 from gym_workouts.models import ImportBatch, SourceRecord, VaultWrite, WorkoutSession, WorkoutSet
 from gym_workouts.repositories import WorkoutRepository
+from gym_workouts.users import owner_user_id
 from gym_workouts.vault import publish_note
 
 
@@ -23,18 +25,31 @@ class WorkoutService:
     def __init__(self, factory, settings):
         self.factory = factory
         self.settings = settings
+        self.vault_owner_id = owner_user_id(factory, settings.allowed_email)
+        self.user_id = self.vault_owner_id
+
+    def for_user(self, user_id):
+        if not user_id:
+            raise ValueError("A workout owner is required")
+        scoped = copy(self)
+        scoped.user_id = user_id
+        return scoped
 
     def today(self):
         return datetime.now(ZoneInfo(self.settings.timezone)).date().isoformat()
 
     def state(self):
         with self.factory() as db:
-            repo = WorkoutRepository(db)
+            repo = WorkoutRepository(db, self.user_id)
             last = repo.latest_completed()
             active = repo.active()
             visible = active or repo.latest_completed(on_date=self.today())
             review = list(
-                db.scalars(select(WorkoutSession).where(WorkoutSession.status == "review"))
+                db.scalars(
+                    select(WorkoutSession).where(
+                        WorkoutSession.status == "review", WorkoutSession.user_id == self.user_id
+                    )
+                )
             )
             return {
                 "today": self.today(),
@@ -49,12 +64,12 @@ class WorkoutService:
 
     def get(self, session_id):
         with self.factory() as db:
-            return session_view(WorkoutRepository(db).get(session_id))
+            return session_view(WorkoutRepository(db, self.user_id).get(session_id))
 
     def start(self, routine=None):
         with self.factory() as db:
             db.execute(text("BEGIN IMMEDIATE"))
-            repo = WorkoutRepository(db)
+            repo = WorkoutRepository(db, self.user_id)
             active = repo.active()
             if active:
                 return session_view(active)
@@ -83,9 +98,11 @@ class WorkoutService:
                 else {}
             )
             areas = [r.activity_area for r in last.rows if r.activity_area] if last else []
-            areas = areas or split_therapy_areas(self.settings.therapy_areas)
+            if not areas and self.user_id == self.vault_owner_id:
+                areas = split_therapy_areas(self.settings.therapy_areas)
             workout = WorkoutSession(
                 id=str(uuid4()),
+                user_id=self.user_id,
                 routine=chosen,
                 session_date=self.today(),
                 created_at=datetime.now(UTC).isoformat(),
@@ -127,7 +144,7 @@ class WorkoutService:
     def command(self, session_id: str, command: SessionCommand):
         retry = False
         with self.factory.begin() as db:
-            repo = WorkoutRepository(db)
+            repo = WorkoutRepository(db, self.user_id)
             workout = repo.get(session_id)
             if workout.status == "completed" and command.action in ("finish", "retry"):
                 return session_view(workout)
@@ -141,7 +158,9 @@ class WorkoutService:
                 claimed = db.execute(
                     update(WorkoutSession)
                     .where(
-                        WorkoutSession.id == session_id, WorkoutSession.revision == command.revision
+                        WorkoutSession.id == session_id,
+                        WorkoutSession.user_id == self.user_id,
+                        WorkoutSession.revision == command.revision,
                     )
                     .values(revision=command.revision + 1)
                     .execution_options(synchronize_session=False)
@@ -180,6 +199,8 @@ class WorkoutService:
                 elif command.action in ("discard", "cancel"):
                     workout.status = "discarded"
                 elif command.action == "finish":
+                    if self.user_id != self.vault_owner_id:
+                        raise ValueError("Obsidian publication is available only to its owner")
                     if any(r.state in ("pending", "unknown") for r in workout.rows):
                         raise ValueError(
                             "Mark every remaining set Done or Skipped before finishing."
@@ -275,6 +296,9 @@ class WorkoutService:
 
     def retry_write(self, session_id):
         with self.factory() as db:
+            WorkoutRepository(db, self.user_id).get(session_id)
+            if self.user_id != self.vault_owner_id:
+                raise ValueError("Obsidian publication is available only to its owner")
             write = db.get(VaultWrite, session_id)
             if write is None or write.status == "saved":
                 return
@@ -294,7 +318,7 @@ class WorkoutService:
             write.error = error
             write.status = "failed" if error else "saved"
             if error is None:
-                workout = WorkoutRepository(db).get(session_id)
+                workout = WorkoutRepository(db, self.user_id).get(session_id)
                 workout.status = "completed"
                 workout.completed_at = workout.completed_at or datetime.now(UTC).isoformat()
                 workout.source_path = target_name
@@ -320,14 +344,18 @@ class WorkoutService:
     def recover_writes(self):
         with self.factory() as db:
             pending = list(
-                db.scalars(select(VaultWrite.session_id).where(VaultWrite.status != "saved"))
+                db.scalars(
+                    select(VaultWrite.session_id)
+                    .join(WorkoutSession, WorkoutSession.id == VaultWrite.session_id)
+                    .where(VaultWrite.status != "saved", WorkoutSession.user_id == self.user_id)
+                )
             )
         for session_id in pending:
             self.retry_write(session_id)
 
     def approve_import(self, session_id):
         with self.factory.begin() as db:
-            workout = WorkoutRepository(db).get(session_id)
+            workout = WorkoutRepository(db, self.user_id).get(session_id)
             if workout.status != "review":
                 raise ValueError("This note does not need completion review")
             workout.status = "completed"

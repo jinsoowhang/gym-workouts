@@ -78,8 +78,11 @@ def create_app(settings=None):
     app.state.service = service
     app.state.factory = factory
     app.state.engine = engine
-    configure_auth(app, settings, factory, templates)
+    configure_auth(app, settings, factory, templates, service.user_id)
     app.mount("/static", StaticFiles(directory=PACKAGE / "static"), name="static")
+
+    def user_service(request):
+        return service.for_user(request.state.user_id) if settings.auth_enabled else service
 
     @app.middleware("http")
     async def local_boundary(request, call_next):
@@ -119,7 +122,9 @@ def create_app(settings=None):
 
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request):
-        return templates.TemplateResponse(request, "home.html", workout_context(service))
+        return templates.TemplateResponse(
+            request, "home.html", workout_context(user_service(request))
+        )
 
     @app.get("/history", response_class=HTMLResponse)
     def history(request: Request):
@@ -131,7 +136,10 @@ def create_app(settings=None):
             records = list(
                 db.scalars(
                     select(WorkoutSession)
-                    .where(WorkoutSession.status.in_(["completed", "review"]))
+                    .where(
+                        WorkoutSession.status.in_(["completed", "review"]),
+                        WorkoutSession.user_id == user_service(request).user_id,
+                    )
                     .order_by(WorkoutSession.session_date.desc(), WorkoutSession.created_at.desc())
                 )
             )
@@ -140,18 +148,25 @@ def create_app(settings=None):
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard(request: Request, days: int = 90, exercise: str = "", metric: str = "weight"):
         data = dashboard_data(
-            factory, service.today(), days=days, exercise_id=exercise, metric=metric
+            factory,
+            service.today(),
+            user_id=user_service(request).user_id,
+            days=days,
+            exercise_id=exercise,
+            metric=metric,
         )
         return templates.TemplateResponse(request, "dashboard.html", data)
 
     @app.get("/workouts/{session_id}", response_class=HTMLResponse)
     def saved_workout(request: Request, session_id: str):
+        service = user_service(request)
         return templates.TemplateResponse(
             request, "home.html", workout_context(service, service.get(session_id))
         )
 
     @app.post("/start", response_class=HTMLResponse)
     async def start_form(request: Request):
+        service = user_service(request)
         form = await request.form()
         chosen = StartCommand(routine=form.get("routine") or None)
         workout = service.start(chosen.routine)
@@ -162,12 +177,13 @@ def create_app(settings=None):
         return RedirectResponse("/", status_code=303)
 
     @app.post("/review/{session_id}")
-    def review(session_id: str):
-        service.approve_import(session_id)
+    def review(request: Request, session_id: str):
+        user_service(request).approve_import(session_id)
         return RedirectResponse("/history", status_code=303)
 
     @app.post("/sessions/{session_id}/command", response_class=HTMLResponse)
     async def form_command(request: Request, session_id: str):
+        service = user_service(request)
         form = await request.form()
         action = str(form.get("action", "save"))
         try:
@@ -239,20 +255,20 @@ def create_app(settings=None):
         )
 
     @app.get("/api/v1/state")
-    def api_state():
-        return service.state()
+    def api_state(request: Request):
+        return user_service(request).state()
 
     @app.post("/api/v1/sessions")
-    def api_start(command: StartCommand):
-        return service.start(command.routine)
+    def api_start(request: Request, command: StartCommand):
+        return user_service(request).start(command.routine)
 
     @app.get("/api/v1/sessions/{session_id}")
-    def api_session(session_id: str):
-        return service.get(session_id)
+    def api_session(request: Request, session_id: str):
+        return user_service(request).get(session_id)
 
     @app.post("/api/v1/sessions/{session_id}/command")
-    def api_command(session_id: str, command: SessionCommand):
-        return service.command(session_id, command)
+    def api_command(request: Request, session_id: str, command: SessionCommand):
+        return user_service(request).command(session_id, command)
 
     @app.get("/health")
     def health():

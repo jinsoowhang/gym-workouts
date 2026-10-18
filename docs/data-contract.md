@@ -1,5 +1,13 @@
 # Workout and analytics contracts
 
+- Workout sessions and personal routine templates require an owning user. All
+  existing sessions (including drafts and review items) are assigned to the
+  configured owner by migration. Rows and pending vault writes inherit the
+  session's ownership. Login sessions reference that same stable user identity.
+  The single-user vault provenance records remain private to the vault owner.
+- Owner analytics snapshots filter sessions, sets, templates, and publications
+  before extraction. User emails, Google subjects, login sessions, and user IDs
+  are excluded; the existing warehouse columns and metrics remain compatible.
 - Session filenames: `YYYY-MM-DD Workout A.md` or `... B.md`; dates must be valid ISO
   local calendar dates. Archive subdirectories are included. The historical TSV is
   excluded because it does not establish A/B identity.

@@ -24,7 +24,8 @@ TABLES = (
 EXCLUDED = {
     "source_records": {"original_text"},
     "vault_writes": {"content"},
-    "workout_sessions": {"therapy_areas"},
+    "routine_sets": {"user_id"},
+    "workout_sessions": {"therapy_areas", "user_id"},
     "workout_sets": {"activity_area"},
 }
 
@@ -35,6 +36,9 @@ def extract_snapshot(database_path):
     with sqlite3.connect(f"{database_path.resolve().as_uri()}?mode=ro", uri=True) as db:
         db.execute("BEGIN")
         version = db.execute("SELECT version_num FROM alembic_version").fetchone()[0]
+        owner = db.execute("SELECT id FROM users WHERE vault_owner = 1").fetchone()
+        if owner is None:
+            raise ValueError("Operational database has no configured owner")
         tables = {}
         for name in TABLES:
             contract = Base.metadata.tables[name]
@@ -44,7 +48,25 @@ def extract_snapshot(database_path):
             columns = [c.name for c in contract.columns if c.name not in EXCLUDED.get(name, set())]
             names = ", ".join(f'"{column}"' for column in columns)
             key = next(iter(contract.primary_key)).name
-            rows = db.execute(f'SELECT {names} FROM "{name}" ORDER BY "{key}"').fetchall()
+            condition = (
+                " WHERE user_id = ?"
+                if name in {"routine_sets", "workout_sessions"}
+                else " WHERE session_id IN (SELECT id FROM workout_sessions WHERE user_id = ?)"
+                if name in {"workout_sets", "vault_writes"}
+                else ""
+            )
+            parameters = owner if condition else ()
+            if name == "exercises":
+                condition = (
+                    " WHERE id IN (SELECT exercise_id FROM routine_sets WHERE user_id = ? "
+                    "UNION SELECT r.exercise_id FROM workout_sets r JOIN workout_sessions w "
+                    "ON w.id = r.session_id WHERE w.user_id = ?)"
+                )
+                parameters = owner + owner
+            rows = db.execute(
+                f'SELECT {names} FROM "{name}"{condition} ORDER BY "{key}"',
+                parameters,
+            ).fetchall()
             tables[name] = {"columns": columns, "rows": rows}
         payload = {"schema_version": version, "tables": tables}
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
