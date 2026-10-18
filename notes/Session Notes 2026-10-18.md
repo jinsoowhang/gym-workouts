@@ -78,3 +78,53 @@ website-only completion are deferred. Actual owner sign-in must be repeated afte
 the migration; authenticated recording and note sync remain manual verification.
 The local server and Windows launcher remain in their prior state. No real test
 workout was created, and private settings/backups remain ignored.
+
+## Login design research and previews
+
+Reviewed the current login and found that its single content element is squeezed
+into the first column of the shared workout `.start-panel` grid. Researched Google
+sign-in branding, WCAG text contrast/target sizes, and focused navigation guidance.
+Saved linked findings and tradeoffs in `Login Design Research 2026-10-18.md`.
+
+Created `Login Design Options 2026-10-18.html`, a standalone local design preview
+with three selectable directions, desktop/mobile sizes, and proposed error-state
+copy. Quiet focus is recommended for its clear action, restrained appearance, and
+fit with the current app. Training journal adds a warm editorial introduction;
+After hours offers a charcoal/mint fitness style. All avoid private workout data
+and expose only the existing approved-account sign-in concept.
+
+Chromium exercised all option/size controls, captured desktop/mobile screenshots,
+and verified no horizontal overflow at a 375px viewport, 48px sign-in controls,
+and no JavaScript errors. Inspected the comparison and desktop editorial preview.
+Screenshots remain ignored under `data/reports/login-design-options/`. No production
+login changes or deployment occurred; selection of a visual direction is next.
+
+## Quiet focus login implementation
+
+The user selected option 1. Implemented its centered ivory/sage card, barbell
+emblem, concise greeting, account-privacy helper, and approved-account access note.
+Replaced the shared workout-grid login container with dedicated login markup and
+`login.css`. Added small base-template blocks to support login-specific styling,
+skip text, navigation, and footer while retaining other pages' default rendering.
+
+The Google action retains the existing OAuth URL. Vendored the current official
+SVG from Google's downloadable sign-in asset bundle, cropping its canvas and
+removing the outer button border while retaining the original gradient logo and
+outlined text. The responsive link supplies its border, padding, hover/focus, and
+48px target. This avoids a new font or external runtime asset dependency.
+Provenance: https://developers.google.com/identity/branding-guidelines .
+
+Verification passed 34 authentication/configuration tests and both existing
+desktop browser recording workflows. Exercised ready, OAuth-error, and unavailable
+states at 1440px, 375px, and 320px, including their HTTP status, error/status
+announcements, Google link/asset, keyboard focus, touch target, and absence of
+horizontal overflow or unexpected browser errors. Checked normal text contrast
+pairs range from 5.53:1 to 7.40:1. Ruff, formatting, whitespace, and public-file
+policy passed. Inspected desktop and mobile-error screenshots.
+
+Backed up the deployed source and previous container image, then deployed only
+the two templates and two new static assets. No database migration was needed.
+Live desktop/mobile Chromium checks passed; public CSS/SVG hashes match local
+assets, health is good, and anonymous API requests remain blocked. Screenshots
+are ignored in `data/reports/login-quiet-focus/`; rollback details stay in the
+private deployment checkpoint.

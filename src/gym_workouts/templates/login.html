@@ -1,15 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Sign in · Gym Workouts{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/login.css?v=20261018-quiet-focus">{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block skip_label %}Skip to sign in{% endblock %}
+{% block navigation %}{% endblock %}
 {% block content %}
-<section class="workout-shell">
-  <div class="page-intro"><div><p class="eyebrow">YOUR TRAINING, IN FOCUS</p><h1>Your workouts, always within reach.</h1><p class="intro-copy">Sign in to continue your workout or review your history.</p></div></div>
-  <div class="start-panel">
-    <div>
-      <h2>Welcome back.</h2>
-      {% if error %}<p class="save-error" role="alert">{{ error }}</p>{% endif %}
-      {% if login_ready %}<p>Use your approved Google account to access your personal workout log.</p><a class="primary" href="/auth/login">Sign in with Google <span aria-hidden="true">↗</span></a>
-      {% else %}<p role="status">Sign-in setup is in progress. Please try again later.</p>{% endif %}
-    </div>
-  </div>
+<section class="login-card" aria-labelledby="login-heading">
+  <span class="login-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h10M3 10v4m18-4v4"/><rect x="4" y="6" width="3" height="12" rx="1"/><rect x="17" y="6" width="3" height="12" rx="1"/></svg></span>
+  <p class="eyebrow">ONE SESSION AT A TIME</p>
+  <h1 id="login-heading">Welcome back.</h1>
+  <p class="login-intro">Pick up your workout, revisit your history, and see your progress.</p>
+  {% if error %}<p class="login-error" role="alert">{{ error }}</p>{% endif %}
+  {% if login_ready %}
+  <a class="google-signin" href="/auth/login"><img src="/static/google-signin-label.svg?v=20261018" alt="Sign in with Google" width="156" height="20"></a>
+  <p class="login-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Your workouts stay with your account.</span></p>
+  <p class="login-access">Access is currently limited to approved accounts.</p>
+  {% else %}
+  <p class="login-unavailable" role="status">Sign-in setup is in progress. Please try again later.</p>
+  {% endif %}
 </section>
 {% endblock %}
+{% block footer %}<footer class="site-footer"><span>Built for your everyday progress.</span><span>Gym Workouts</span></footer>{% endblock %}

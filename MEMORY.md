@@ -149,6 +149,34 @@ whitespace, public-file policy, and live HTTPS/authentication-boundary checks.
 The owner must sign in again after this migration; actual owner sign-in and
 authenticated recording with note sync remain manual checks.
 
+## Login design options — 2026-10-18
+
+The user requested design research and options for a professional, pleasant login
+page, then selected Quiet focus. The previous login reused `.start-panel` with
+only one child in its narrow first grid column. The deployed page now uses its
+own centered ivory/sage card and dedicated `login.css`, leaving workout styling
+scoped to its existing pages.
+
+Research and interactive previews are in `notes/Login Design Research 2026-10-18.md`
+and `notes/Login Design Options 2026-10-18.html`. Three directions are Quiet focus
+(recommended, centered ivory/sage), Training journal (warm split editorial), and
+After hours (charcoal/mint). Google-button branding, readable contrast, one clear
+action, visible focus, mobile sizing, truthful access notes, and no public owner
+data guide the options. Screenshots live in ignored reports. Preview controls,
+375px overflow, 48px buttons, and JavaScript errors were checked in Chromium.
+Quiet focus is implemented and deployed. The Google button uses the current
+official downloaded SVG logo/outlined label with a responsive 48px link boundary;
+the logo colors and label artwork are unchanged. The base template exposes small
+blocks for page styling, body class, navigation, skip label, and footer. Login
+error/status announcements and the existing OAuth redirect are retained.
+
+Verification passed 34 authentication/configuration tests and both existing
+browser recording workflows. Ready, OAuth-error, and unavailable states were
+checked at 1440/375/320px, including focus, target size, asset loading, and overflow.
+All checked normal-size text pairs exceed 4.5:1 contrast. Live desktop/mobile
+Chromium screenshots, asset hashes, health and anonymous API protection passed.
+Deployment source/image rollback backups and screenshots remain private/ignored.
+
 ## Workout warm-up — 2026-10-16
 
 Ready and draft workouts show a warm-up video card before the routine/exercises

@@ -7,18 +7,19 @@
   <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
   <title>{% block title %}Gym Workouts{% endblock %}</title>
   <link rel="stylesheet" href="/static/app.css?v=20261016-deltas">
+  {% block styles %}{% endblock %}
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <script src="/static/htmx.min.js" defer></script>
   <script src="/static/app.js?v=20261016-deltas" defer></script>
 </head>
-<body>
-  <a class="skip-link" href="#main">Skip to workout</a>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">{% block skip_label %}Skip to workout{% endblock %}</a>
   <header class="site-header">
     <a class="brand" href="/" aria-label="Gym Workouts home"><span class="brand-mark" aria-hidden="true">G.</span>GYM WORKOUTS</a>
-    {% if not request.app.state.auth_enabled or request.state.authenticated %}<nav aria-label="Main navigation"><a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Workout</a><a href="/history" {% if request.url.path == '/history' %}aria-current="page"{% endif %}>History</a><a href="/dashboard" {% if request.url.path == '/dashboard' %}aria-current="page"{% endif %}>Dashboard</a>{% if request.app.state.auth_enabled %}<form action="/auth/logout" method="post"><button class="text-button" type="submit">Sign out</button></form>{% endif %}</nav>{% endif %}
+    {% block navigation %}{% if not request.app.state.auth_enabled or request.state.authenticated %}<nav aria-label="Main navigation"><a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Workout</a><a href="/history" {% if request.url.path == '/history' %}aria-current="page"{% endif %}>History</a><a href="/dashboard" {% if request.url.path == '/dashboard' %}aria-current="page"{% endif %}>Dashboard</a>{% if request.app.state.auth_enabled %}<form action="/auth/logout" method="post"><button class="text-button" type="submit">Sign out</button></form>{% endif %}</nav>{% endif %}{% endblock %}
     <span class="header-note"><span class="status-dot"></span> Your personal training log</span>
   </header>
   <main id="main">{% block content %}{% endblock %}</main>
-  <footer class="site-footer"><span>One session at a time.</span><span>Weights in pounds · A / B</span></footer>
+  {% block footer %}<footer class="site-footer"><span>One session at a time.</span><span>Weights in pounds · A / B</span></footer>{% endblock %}
 </body>
 </html>

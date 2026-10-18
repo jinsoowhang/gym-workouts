@@ -1,0 +1,24 @@
+.login-page{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:#f4f5ef}
+.login-page .site-header{width:100%;border-bottom:0;padding:28px 38px;gap:24px}
+.login-page .brand{font-size:10px;letter-spacing:1.5px;gap:10px}
+.login-page .brand-mark{width:33px;height:33px;border-radius:9px;background:#263d31;font-size:23px;letter-spacing:-1px}
+.login-page .header-note{font-size:11px;color:#53635a}
+.login-page .status-dot{display:none}
+.login-page main{flex:1;display:grid;place-items:center;width:100%;max-width:none;margin:0;padding:44px 24px}
+.login-card{width:min(100%,450px);min-width:0;background:#fffefb;border:1px solid #dadfd2;border-radius:20px;padding:44px 42px 36px;text-align:center;box-shadow:0 10px 30px #293f2c06}
+.login-emblem{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 24px;background:#e9efdf;border-radius:14px;color:#385b3d}
+.login-emblem svg{width:25px;height:25px}
+.login-card .eyebrow{color:#476548;letter-spacing:1.8px;margin-bottom:15px}
+.login-card h1{font-size:40px;line-height:1.1;letter-spacing:-1.5px;margin:0 0 14px}
+.login-intro{color:#56645a;font-size:14px;line-height:1.65;margin:0 0 26px}
+.google-signin{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;padding:12px;border:1px solid #747775;border-radius:24px;background:#fff;text-decoration:none}
+.google-signin img{display:block;width:156px;height:20px;max-width:100%;object-fit:contain}
+.google-signin:hover{background:#f5f7f8}
+.google-signin:active{background:#e9edef}
+.login-privacy{display:flex;align-items:flex-start;justify-content:center;gap:7px;font-size:11px;line-height:1.55;color:#53635a;margin:18px 0 0}
+.login-privacy svg{width:14px;height:14px;margin-top:2px;flex-shrink:0}
+.login-access{font-size:11px;line-height:1.6;color:#59665d;margin:28px 0 0}
+.login-error,.login-unavailable{padding:14px;border:1px solid #d1a494;border-radius:8px;background:#fbefea;font-size:13px;line-height:1.6;color:#81381f;margin:0 0 22px;overflow-wrap:anywhere}
+.login-unavailable{border-color:#d5dfcb;background:#edf2e6;color:#3d5e39;margin-bottom:0}
+.login-page .site-footer{width:100%;margin:0 auto;border-top:0;padding:24px 38px;color:#58665b;font-size:10px}
+@media(max-width:650px){.login-page .site-header{padding:22px;gap:12px}.login-page main{padding:22px 20px 35px}.login-card{padding:32px 22px;border-radius:16px}.login-card h1{font-size:36px}.login-page .site-footer{padding:20px 22px;gap:12px;flex-wrap:wrap}.login-access{margin-top:24px}}
