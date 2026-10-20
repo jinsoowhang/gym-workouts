@@ -2,6 +2,33 @@
 
 let changes = 0;
 let acknowledged = 0;
+const minimizedExercises = new Set();
+
+function setExerciseMinimized(card, minimized) {
+  const button = card.querySelector(".exercise-toggle");
+  const body = card.querySelector(".exercise-body");
+  const label = minimized ? "Expand" : "Minimize";
+  body.hidden = minimized;
+  button.setAttribute("aria-expanded", String(!minimized));
+  button.setAttribute("aria-label", `${label} ${card.getAttribute("aria-label")}`);
+  button.firstChild.textContent = `${label} `;
+  button.lastElementChild.textContent = minimized ? "+" : "−";
+  button.hidden = false;
+  if (minimized) minimizedExercises.add(body.id);
+  else minimizedExercises.delete(body.id);
+}
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest(".exercise-toggle");
+  if (!button) return;
+  setExerciseMinimized(button.closest(".exercise-card"), button.getAttribute("aria-expanded") === "true");
+});
+
+// Reveal an invalid field before the browser tries to focus it on submission.
+document.addEventListener("invalid", (event) => {
+  const card = event.target.closest(".exercise-card");
+  if (card) setExerciseMinimized(card, false);
+}, true);
 
 function updateValueChange(input) {
   const indicator = document.getElementById(input.getAttribute("aria-describedby"));
@@ -22,6 +49,9 @@ function updateValueChange(input) {
 
 document.addEventListener("htmx:load", () => {
   document.querySelectorAll(".set-input input[data-default]").forEach(updateValueChange);
+  document.querySelectorAll(".exercise-card").forEach((card) => {
+    setExerciseMinimized(card, minimizedExercises.has(card.querySelector(".exercise-body").id));
+  });
 });
 
 document.addEventListener("submit", (event) => {

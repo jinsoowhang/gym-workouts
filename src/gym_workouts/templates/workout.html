@@ -28,9 +28,11 @@
       <div class="session-layout"><div class="exercise-grid">
       {% for group in groups %}
         <section class="exercise-card" aria-label="{{ group.title }}">
-          <header class="card-header"><div>{{ exercise_icon(group.title) }}<h2>{{ group.title }}</h2></div>
+          <header class="card-header"><div class="card-heading">{{ exercise_icon(group.title) }}<h2>{{ group.title }}</h2></div>
+          <div class="card-actions"><button class="text-button exercise-toggle" type="button" aria-expanded="true" aria-controls="exercise-{{ session.id }}-{{ group.exercises[0].id }}" aria-label="Minimize {{ group.title }}" hidden>Minimize <span aria-hidden="true">−</span></button>
           {% if editable and group.exercises|length == 1 %}{% set exercise = group.exercises[0] %}
-          <button class="icon-button {{ 'undo' if exercise.removed else '' }}" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ 'Undo' if exercise.removed else '×' }}</button>{% endif %}</header>
+          <button class="icon-button {{ 'undo' if exercise.removed else '' }}" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ 'Undo' if exercise.removed else '×' }}</button>{% endif %}</div></header>
+          <div class="exercise-body" id="exercise-{{ session.id }}-{{ group.exercises[0].id }}">
           {% if group.exercises|length > 1 and editable %}<div class="exercise-controls">{% for exercise in group.exercises %}<button class="text-button" type="submit" name="action" value="{{ 'restore:' if exercise.removed else 'remove:' }}{{ exercise.id }}" aria-label="{{ 'Restore' if exercise.removed else 'Remove' }} {{ exercise.name }}">{{ exercise.name }} <span>{{ 'Undo' if exercise.removed else '×' }}</span></button>{% endfor %}</div>{% endif %}
           <p class="card-source">{{ group.source_summary }}{% if group.rows[0].type == 'activity' %} · Each row is one muscle / area{% endif %}</p>
           {% if group.title == 'Physical Therapy' %}<p><a class="text-button" href="https://app.lainahealth.com/" target="_blank" rel="noopener noreferrer">Open Laina Health <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></p>{% endif %}
@@ -53,6 +55,7 @@
           </div>
           {% endfor %}
           {% if editable %}<div class="add-row-controls">{% for exercise in group.exercises %}<button class="text-button add-row" type="submit" name="action" value="add-set:{{ exercise.id }}" aria-label="{{ 'Add area to' if group.rows[0].type == 'activity' else 'Add set to' }} {{ exercise.name }}"><span aria-hidden="true">+</span> {{ 'Add area' if group.rows[0].type == 'activity' else 'Add ' ~ exercise.name ~ ' set' if group.exercises|length > 1 else 'Add set' }}</button>{% endfor %}</div>{% endif %}
+          </div>
         </section>
       {% endfor %}
       </div><aside class="session-sidebar">

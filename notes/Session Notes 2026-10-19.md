@@ -21,3 +21,27 @@ Local, remote-source, and running-container hashes match. Public health returns
 while wrong-origin requests still return 403 and anonymous data access is blocked.
 No synthetic workout was written to the real database. User retry and completion
 with Obsidian note sync remain the final real-account verification.
+
+## Minimize exercise cards
+
+Added Minimize / Expand buttons to each exercise card so finished exercises can
+be tucked away while the user moves to the next exercise. The exercise name and
+existing removal/Undo control remain visible. Buttons use explicit accessible
+names, expanded state, and a controlled body ID; they do not submit the form.
+Hidden inputs remain enabled and retain their values for autosave and Finish.
+Cards stay minimized across HTMX form replacements within the current page,
+with state keyed to the workout and exercise. A full reload starts expanded.
+Invalid fields automatically reveal their card before browser validation focuses
+them. Versioned CSS/JS URLs refresh browser assets on the next page load.
+
+Verification: 45 browser, session-row, and workflow tests passed. Both browser
+settling-delay cases cover keyboard minimize/expand, retained edits through form
+replacement, finishing with a minimized card, and validation of a hidden invalid
+field. Mobile widths of 375px and 320px have no horizontal overflow. Synthetic
+desktop/mobile screenshots were visually checked; JavaScript syntax, Ruff,
+formatting, and whitespace checks passed. Deployment preserves the prior source
+and image privately and updates only the gym container. Real workout data was
+not used in tests or screenshots; existing drafts remain in persistent SQLite.
+Live health passed, public CSS/JS hashes and running-container template hashes
+match local files, and the login page references the versioned assets. The previous
+Start origin fix and anonymous authentication boundary were rechecked successfully.

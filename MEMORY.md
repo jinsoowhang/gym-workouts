@@ -15,6 +15,13 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 - The web UI has no per-set status column. Finish records remaining sets/activities
   as performed; removed rows retain their planned positions in note metadata.
   API clients still submit explicit states. Cards use inline SVG exercise icons.
+- Exercise cards offer Minimize / Expand controls. Minimizing only hides the
+  card body; fields remain enabled and are included in autosave and Finish.
+  Session/exercise IDs keep cards minimized through HTMX replacements in the
+  current page; a full reload starts expanded. Invalid inputs reveal their card
+  before browser validation focuses the field. Controls support keyboard use and
+  narrow mobile layouts. Deployed after 45 scoped tests, including both browser
+  workflows; synthetic desktop/mobile screenshots were checked.
 - Physical Therapy has separate autosaving muscle/area rows (`activity_area`),
   each with ×/Undo and an Add area button. Labels carry across routines from the
   latest completed session, including session-only removals, with optional
