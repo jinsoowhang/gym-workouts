@@ -90,9 +90,10 @@ def create_app(settings=None):
             origin = request.headers.get("origin")
             if origin:
                 parsed = urlsplit(origin)
-                if parsed.scheme != request.url.scheme or parsed.netloc != request.headers.get(
-                    "host"
-                ):
+                # Hosted requests can reach us over HTTP after HTTPS termination.
+                # Validate against the configured public origin, not that internal hop.
+                expected = urlsplit(settings.public_url) if settings.auth_enabled else request.url
+                if parsed.scheme != expected.scheme or parsed.netloc != expected.netloc:
                     return JSONResponse({"detail": "Cross-origin request denied"}, status_code=403)
             if request.headers.get("sec-fetch-site") == "cross-site":
                 return JSONResponse({"detail": "Cross-site request denied"}, status_code=403)

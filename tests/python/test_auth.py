@@ -152,6 +152,30 @@ def test_google_login_creates_secure_revocable_session(hosted):
     assert client.get("/api/v1/state").status_code == 401
 
 
+@pytest.mark.parametrize("internal_scheme", ["http", "https"])
+def test_start_workout_behind_https_termination(hosted, internal_scheme):
+    client, _factory, provider = hosted
+    assert complete_login(client, provider).status_code == 303
+    # The browser sends its Secure cookie over HTTPS; a proxy may use HTTP upstream.
+    headers = {
+        "Origin": "https://gym.example.com",
+        "Cookie": f"{COOKIE_NAME}={client.cookies.get(COOKIE_NAME)}",
+        "HX-Request": "true",
+    }
+    url = f"{internal_scheme}://gym.example.com/start"
+    for origin in (
+        "http://gym.example.com",
+        "https://other.example.com",
+        "https://gym.example.com:444",
+    ):
+        response = client.post(url, data={"routine": "A"}, headers=headers | {"Origin": origin})
+        assert response.status_code == 403
+    response = client.post(url, data={"routine": "A"}, headers=headers)
+    assert response.status_code == 200
+    assert 'id="session-form"' in response.text
+    assert client.get("/api/v1/state").json()["session"]["status"] == "draft"
+
+
 @pytest.mark.parametrize(
     "claims",
     [

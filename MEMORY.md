@@ -85,6 +85,17 @@ launcher calls the project launcher, so fixes apply to both entry points.
 
 ## VPS hosting
 
+Hosted Start workout was fixed on 2026-10-19 after reproducing a same-origin
+POST rejection through the public proxy chain. With authentication enabled,
+mutation Origin checks use the configured HTTPS `GYM_PUBLIC_URL`, because the
+upstream connection may be HTTP after TLS termination. Local mode still uses the
+request origin; host checks and foreign-origin rejection remain enforced.
+Regression tests cover authenticated workout creation over HTTP/HTTPS upstreams
+and rejection of incorrect Origin schemes, hosts, and ports. Verification passed
+56 scoped tests and both browser workflows. The rebuilt VPS app is healthy and
+public same-origin requests now reach authentication instead of being rejected
+by the origin boundary. Actual owner recording and note sync still need confirmation.
+
 The selected hosting design now uses direct Google sign-in in the app behind the
 VPS's existing Nginx Proxy Manager. Cloudflare Access/Tailscale is not required.
 `deploy/compose.yml` joins the existing proxy network without publishing a host
