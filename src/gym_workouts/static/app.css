@@ -18,3 +18,6 @@
 @media(max-width:650px){.exercise-trend .chart-label{font-size:18px}.dashboard-page>.page-intro{flex-wrap:wrap}.dashboard-page>.page-intro>.pill{white-space:nowrap}}
 .exercise-grid{align-items:start}.card-heading{min-width:0}.card-heading h2{overflow-wrap:anywhere}.card-header>.card-actions{gap:2px;flex-shrink:0}.exercise-toggle{min-height:44px;padding:8px;font-size:11px;color:var(--green);white-space:nowrap}.exercise-toggle span{font-size:16px;margin-left:3px}.exercise-toggle[hidden],.exercise-body[hidden]{display:none}
 @media(max-width:400px){.card-header{flex-wrap:wrap}.card-header>.card-actions{margin-left:auto}}
+.header-signout{margin-left:auto;flex-shrink:0}.header-signout button{min-height:44px;white-space:nowrap}
+@media(max-width:1050px){.site-header{column-gap:24px}}
+@media(max-width:650px){.site-header nav{order:1}}

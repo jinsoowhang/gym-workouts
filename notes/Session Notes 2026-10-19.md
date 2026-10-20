@@ -45,3 +45,26 @@ not used in tests or screenshots; existing drafts remain in persistent SQLite.
 Live health passed, public CSS/JS hashes and running-container template hashes
 match local files, and the login page references the versioned assets. The previous
 Start origin fix and anonymous authentication boundary were rechecked successfully.
+
+## Right-aligned Sign out
+
+Moved Sign out out of the navigation links to a separate form at the far right
+of the header. On mobile it shares the logo row, with navigation underneath.
+Kept the POST logout action and authenticated-only visibility. Updated the CSS
+asset version to refresh cached styles. Synthetic browser checks covered Workout,
+History, and Dashboard at seven widths from 320px through 1440px: right alignment,
+no horizontal overflow, and the mobile row layout passed. Clicking Sign out
+revoked the synthetic login and displayed the login page. Desktop/mobile
+screenshots were visually checked. Public-file and whitespace checks passed.
+Preserved the prior source/image privately before updating only the gym container.
+
+## Publication verification
+
+Grouped the changes into separate commits for hosted Origin validation, exercise
+minimize/expand controls, and right-aligned Sign out, including matching memory
+and session-note updates. Independent staged snapshots passed 56 scoped tests for
+the Origin fix and 45 scoped tests for minimizing, including both browser cases.
+The final tree passed the complete check script: 105 Python/browser tests, eight
+dbt models and 35 data tests, Ruff, formatting, compilation, SQLFluff, and the
+public-file policy. Workouts, settings, credentials, backups, and screenshots
+remain ignored. Git commits retain the GitHub noreply identity.

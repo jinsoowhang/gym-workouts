@@ -15,6 +15,9 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 - The web UI has no per-set status column. Finish records remaining sets/activities
   as performed; removed rows retain their planned positions in note metadata.
   API clients still submit explicit states. Cards use inline SVG exercise icons.
+- Sign out sits outside the main navigation at the far right of the header.
+  On mobile it shares the logo row, with navigation on the row below. The POST
+  logout flow and authentication visibility conditions are unchanged.
 - Exercise cards offer Minimize / Expand controls. Minimizing only hides the
   card body; fields remain enabled and are included in autosave and Finish.
   Session/exercise IDs keep cards minimized through HTMX replacements in the
@@ -54,6 +57,12 @@ Python 3.12/uv, FastAPI/Jinja/HTMX, SQLAlchemy/SQLite/Alembic, dbt/DuckDB,
 pytest/HTTPX/Playwright, Ruff, SQLFluff, pre-commit, and GitHub Actions.
 Eight dbt models and 35 data tests. Synthetic fixtures and private warehouse files
 are separate; never seed the private warehouse. Run `bash scripts/check.sh`.
+
+The 2026-10-19 release passed the full checks with 105 Python/browser tests,
+eight dbt models and 35 data tests, Ruff, formatting, compilation, SQLFluff, and
+public-file policy. Origin and minimize changes also passed scoped tests from
+independent staged snapshots; the header passed authenticated responsive/logout
+checks. The three changes are committed separately with their session notes.
 
 ## Public sharing
 
