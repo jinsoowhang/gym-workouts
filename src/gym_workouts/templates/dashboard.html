@@ -4,6 +4,12 @@
 {% block content %}
 <section class="dashboard-page">
   <div class="page-intro"><div><p class="eyebrow">A LITTLE PERSPECTIVE</p><h1>Your training, over time.</h1><p class="intro-copy">See the work you’ve recorded and how your numbers are changing.</p></div><span class="pill complete">{{ range_label }}</span></div>
+  <section class="dashboard-panel dashboard-highlights" aria-labelledby="highlights-title">
+    <header><p class="eyebrow">THE LATEST</p><h2 id="highlights-title">Training highlights</h2></header>
+    {% if highlights %}<ul>{% for highlight in highlights %}<li>{{ highlight }}</li>{% endfor %}</ul>
+    {% else %}<p>Complete a workout to start seeing highlights.</p>{% endif %}
+    <p class="dashboard-footnote">Last 7 days across all exercises. Updates after each completed workout; independent of the filters below.</p>
+  </section>
   <form class="dashboard-filters" action="/dashboard" method="get" aria-label="Dashboard filters">
     <div><label for="dashboard-range">Date range</label><select id="dashboard-range" name="days">{% for value, label in ranges.items() %}<option value="{{ value }}" {% if value == days %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
     <div><label for="dashboard-exercise">Exercise</label><select id="dashboard-exercise" name="exercise" {% if not exercises %}disabled{% endif %}>{% for exercise in exercises %}<option value="{{ exercise.id }}" {% if exercise.id == selected_id %}selected{% endif %}>{{ exercise.name }}</option>{% else %}<option>No recorded exercises yet</option>{% endfor %}</select></div>

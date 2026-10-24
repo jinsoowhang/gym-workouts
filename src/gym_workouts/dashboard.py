@@ -70,6 +70,94 @@ def exercise_chart(points, metric):
     }
 
 
+def training_highlights(records, end):
+    """Summarize recent completed history independently of chart filters."""
+    completed = [workout for workout in records if workout.status == "completed"]
+    if not completed:
+        return []
+    recent_start = end - timedelta(days=6)
+    previous_start = recent_start - timedelta(days=7)
+    recent = [w for w in completed if w.session_date >= recent_start.isoformat()]
+    previous = [
+        w
+        for w in completed
+        if previous_start.isoformat() <= w.session_date < recent_start.isoformat()
+    ]
+    if not recent:
+        return [f"Your last completed workout was {completed[-1].session_date}."]
+    count = len(recent)
+    highlights = [
+        f"{count} workout{'s' if count != 1 else ''} in the last 7 days; "
+        f"{len(previous)} in the previous 7."
+    ]
+    history = defaultdict(list)
+    for workout in completed:
+        rows_by_exercise = defaultdict(list)
+        for row in workout.rows:
+            if (
+                row.state == "performed"
+                and row.exercise.measurement_type == "weight_reps"
+                and row.weight is not None
+                and row.reps is not None
+            ):
+                rows_by_exercise[row.exercise_id].append(row)
+        for key, rows in rows_by_exercise.items():
+            top = max(rows, key=lambda row: (row.weight, row.reps))
+            history[key].append((workout.session_date, top))
+    bests = []
+    changes = []
+    for points in history.values():
+        latest_date, latest = points[-1]
+        if latest_date < recent_start.isoformat() or len(points) < 2:
+            continue
+        prior = points[-2][1]
+        name = latest.exercise.name.title()
+        if latest.weight > max(row.weight for _, row in points[:-1]):
+            bests.append(
+                (
+                    latest_date,
+                    name,
+                    f"{name}: new recorded weight best — "
+                    f"{number(latest.weight)} lb × {latest.reps} ({latest_date}).",
+                )
+            )
+        # Compare reps only at an unchanged weight; volume can vary with set count.
+        if latest.weight == prior.weight and latest.reps != prior.reps:
+            difference = latest.reps - prior.reps
+            changes.append(
+                (
+                    latest_date,
+                    name,
+                    f"{name}: top set "
+                    f"{'up' if difference > 0 else 'down'} {abs(difference)} "
+                    f"rep{'s' if abs(difference) != 1 else ''} at "
+                    f"{number(latest.weight)} lb vs. last time ({latest_date}).",
+                )
+            )
+        elif latest.weight < prior.weight:
+            changes.append(
+                (
+                    latest_date,
+                    name,
+                    f"{name}: top-set weight "
+                    f"{number(latest.weight)} lb vs. {number(prior.weight)} lb "
+                    f"last time ({latest_date}).",
+                )
+            )
+    bests.sort(key=lambda item: (-date.fromisoformat(item[0]).toordinal(), item[1]))
+    changes.sort(key=lambda item: (-date.fromisoformat(item[0]).toordinal(), item[1]))
+    if bests:
+        highlights.append(bests[0][2])
+    if changes:
+        highlights.append(changes[0][2])
+    elif len(bests) > 1:
+        highlights.append(bests[1][2])
+    if len(highlights) == 1:
+        latest = recent[-1]
+        highlights.append(f"Latest: Workout {latest.routine} on {latest.session_date}.")
+    return highlights[:3]
+
+
 def dashboard_data(factory, today, *, user_id=None, days=90, exercise_id="", metric="weight"):
     user_id = user_id or owner_user_id(factory)
     if days not in RANGES or metric not in METRICS:
@@ -200,6 +288,7 @@ def dashboard_data(factory, today, *, user_id=None, days=90, exercise_id="", met
             else None
         )
         return {
+            "highlights": training_highlights(records, end),
             "days": days,
             "ranges": RANGES,
             "range_label": RANGES[days],

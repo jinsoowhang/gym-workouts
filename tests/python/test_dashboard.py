@@ -168,3 +168,69 @@ def test_chart_keeps_small_nonzero_weights_visible():
     chart = exercise_chart([{"date": "2026-10-11", "weight": Decimal("0.0001")}], "weight")
     assert [tick["label"] for tick in chart["ticks"]] == ["0.0001", "0.00005", "0"]
     assert chart["points"][0]["y"] == 20
+
+
+def test_highlights_refresh_after_completion_and_ignore_chart_filters(configured):
+    _settings, factory, service = configured
+    before = dashboard_data(factory, service.today())["highlights"]
+    workout = service.start()
+    assert dashboard_data(factory, service.today())["highlights"] == before
+    payload = edits(workout, "finish")
+    for row in payload["sets"]:
+        row["state"] = "performed"
+        source = next(item for item in workout["sets"] if item["id"] == row["id"])
+        if source["name"] == "bench press":
+            row.update(weight="30", reps=6)
+    service.command(workout["id"], SessionCommand(**payload))
+    after = dashboard_data(factory, service.today())["highlights"]
+    assert after != before
+    assert 1 <= len(after) <= 3
+    assert any("Bench Press: new recorded weight best" in item for item in after)
+    assert dashboard_data(factory, service.today(), days=0, metric="reps")["highlights"] == after
+    assert "last completed workout was" in dashboard_data(factory, "2027-01-01")["highlights"][0]
+
+
+def test_highlights_empty_and_position(client, configured):
+    _settings, factory, service = configured
+    response = client.get("/dashboard")
+    assert response.text.index('id="highlights-title"') < response.text.index(
+        'class="dashboard-filters"'
+    )
+    with factory.begin() as db:
+        db.execute(update(WorkoutSession).values(status="review"))
+    assert dashboard_data(factory, service.today())["highlights"] == []
+    assert "Complete a workout to start seeing highlights." in client.get("/dashboard").text
+
+
+def test_highlights_compare_equal_weight_reps_and_roll_weekly():
+    from datetime import date
+    from types import SimpleNamespace
+
+    from gym_workouts.dashboard import training_highlights
+
+    exercise = SimpleNamespace(name="sample press", measurement_type="weight_reps")
+
+    def workout(day, reps, state="performed"):
+        return SimpleNamespace(
+            status="completed",
+            session_date=day,
+            routine="A",
+            rows=[
+                SimpleNamespace(
+                    exercise=exercise,
+                    exercise_id="press",
+                    state=state,
+                    weight=Decimal(20),
+                    reps=reps,
+                )
+            ],
+        )
+
+    records = [workout("2026-10-15", 10), workout("2026-10-22", 8)]
+    highlights = training_highlights(records, date(2026, 10, 24))
+    assert highlights[0] == "1 workout in the last 7 days; 1 in the previous 7."
+    assert "down 2 reps at 20 lb" in highlights[1]
+    assert "best" not in " ".join(highlights)
+    assert training_highlights(records, date(2026, 10, 30)) != highlights
+    removed = [workout("2026-10-15", 10), workout("2026-10-22", 99, "removed")]
+    assert not any("rep" in item for item in training_highlights(removed, date(2026, 10, 24)))

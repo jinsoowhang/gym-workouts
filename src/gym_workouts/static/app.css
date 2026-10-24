@@ -21,3 +21,5 @@
 .header-signout{margin-left:auto;flex-shrink:0}.header-signout button{min-height:44px;white-space:nowrap}
 @media(max-width:1050px){.site-header{column-gap:24px}}
 @media(max-width:650px){.site-header nav{order:1}}
+
+.dashboard-highlights{margin-bottom:24px}.dashboard-highlights ul{padding-left:20px;margin:16px 0;line-height:1.6}.dashboard-highlights li+li{margin-top:8px}.dashboard-highlights li{overflow-wrap:anywhere}

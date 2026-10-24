@@ -298,3 +298,15 @@ commits passed their 66-test and 83-test suites. Publication candidates passed
 Gitleaks scans and retain the GitHub noreply identity. Local settings, databases,
 screenshots, backups, and generated dbt `.user.yml` remain ignored. Publication
 does not deploy or cut over the VPS; local recording remains active.
+
+## Dashboard highlights — 2026-10-24
+
+The Dashboard starts with up to three short factual highlights from completed,
+user-scoped history, independently of chart filters. Rolling seven-day frequency
+compares with the previous seven days; recent latest exercise results can surface
+a strict recorded weight best, a same-weight top-set rep change, or lower recorded
+weight. Comparisons include dates and avoid interpreting decreases as regressions.
+Highlights recompute on page load after completion and as the date window moves.
+Empty history gets guidance; inactive history shows the last completion date.
+The 15 Dashboard tests and scoped Ruff checks passed. This change is local;
+the hosted deployment has not been updated.
