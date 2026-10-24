@@ -101,6 +101,15 @@ launcher calls the project launcher, so fixes apply to both entry points.
 
 ## VPS hosting
 
+On 2026-10-22, a read-only check of the live VPS found no PHP runtime paths or
+installed PHP packages on the host or in its nine running containers. A scan of
+host/container process names and executables found no PHP or Apache processes;
+the Nginx Proxy Manager configuration passed validation and had no PHP handlers.
+The gym container runs Python 3.12.15, FastAPI 0.141.1, and Uvicorn 0.51.0.
+Public health/login checks returned 200. PHP advisories CVE-2026-109618 and
+CVE-2026-109619 do not apply to this observed setup; no updates were needed for
+that alert. Recheck if PHP-based services are introduced.
+
 Hosted Start workout was fixed on 2026-10-19 after reproducing a same-origin
 POST rejection through the public proxy chain. With authentication enabled,
 mutation Origin checks use the configured HTTPS `GYM_PUBLIC_URL`, because the
