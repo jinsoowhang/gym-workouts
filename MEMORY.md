@@ -8,6 +8,13 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 ## Behavior and ownership
 
 - A/B advances after successful completion and Markdown publication.
+- Returning home shows the next suggested workout after completion. Only drafts
+  and pending Obsidian saves reopen automatically. Finish still shows a receipt;
+  completed sessions remain available in History and at their workout URLs.
+  Explicit same-day starts reopen the existing result without creating duplicates.
+  Deployed on 2026-10-24 after 83 application tests and both browser workflows;
+  installed source hashes, live next-workout state, the saved note, and unchanged
+  workout records were verified against the deployment backup.
 - Defaults use latest completed same-routine results in lb, with template fallbacks.
 - Drafts autosave, resume, reject stale revisions, and preserve edits at Finish.
 - Exercise and individual-set removal are session-only with Undo. All planned sets,
@@ -310,3 +317,13 @@ Highlights recompute on page load after completion and as the date window moves.
 Empty history gets guidance; inactive history shows the last completion date.
 The 15 Dashboard tests and scoped Ruff checks passed. This change is local;
 the hosted deployment has not been updated.
+
+## GitHub publication — 2026-10-24
+
+Prepared separate commits for the dated PHP hosting audit, Dashboard highlights,
+and returning home after completion. The Dashboard commit independently passed
+its 15 tests from an isolated staged snapshot. Full release verification passed
+110 Python/browser tests, eight dbt models and 35 data tests, Ruff, formatting,
+compilation, SQLFluff, whitespace, and public-file checks. Commit identity uses
+the GitHub noreply address; private runtime state and deployment backups remain
+ignored. Only the workout-return fix has been deployed to the hosted app.

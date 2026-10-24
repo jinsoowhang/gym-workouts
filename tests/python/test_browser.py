@@ -162,7 +162,13 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 ]
                 assert [row.state for row in bench] == ["performed"] * 3 + ["removed", "performed"]
                 assert str(bench[-1].weight) == "35.125"
+                completed_url = page.locator("#session-form").get_attribute("action")
+                completed_id = completed_url.split("/")[2]
                 page.reload()
+                expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
+                expect(page.locator("#session-form")).to_have_count(0)
+                page.get_by_role("link", name="History", exact=True).click()
+                page.locator(f'a.history-link[href="/workouts/{completed_id}"]').click()
                 expect(page.locator(".session-bar .pill")).to_have_text("Completed")
                 expect(areas).to_have_value("Ankle")
                 expect(second_area).to_have_value("Wrist")
@@ -188,7 +194,8 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(
                     page.get_by_text("Workout cancelled. Start again whenever you’re ready.")
                 ).to_be_visible()
-                expect(page.locator(".session-bar .pill")).to_have_text("Completed")
+                expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
+                expect(page.locator("#session-form")).to_have_count(0)
                 page.get_by_role("link", name="Dashboard", exact=True).click()
                 expect(
                     page.get_by_role("heading", name="Your training, over time.")

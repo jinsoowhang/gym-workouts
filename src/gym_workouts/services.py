@@ -42,8 +42,7 @@ class WorkoutService:
         with self.factory() as db:
             repo = WorkoutRepository(db, self.user_id)
             last = repo.latest_completed()
-            active = repo.active()
-            visible = active or repo.latest_completed(on_date=self.today())
+            visible = repo.active()
             review = list(
                 db.scalars(
                     select(WorkoutSession).where(

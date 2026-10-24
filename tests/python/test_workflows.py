@@ -39,6 +39,46 @@ def test_latest_defaults_are_scoped_and_missing_sets_do_not_shift(configured):
     assert service.state()["suggested"] == "B"
 
 
+@pytest.mark.parametrize(("routine", "next_routine"), [("A", "B"), ("B", "A")])
+def test_returning_home_after_finish_shows_next_workout(client, configured, routine, next_routine):
+    settings, factory, _service = configured
+    workout = client.post("/api/v1/sessions", json={"routine": routine}).json()
+    response = client.post(
+        f"/sessions/{workout['id']}/command", data=form_values(workout, action="finish")
+    )
+    assert response.status_code == 200 and "Session complete" in response.text
+    note = settings.workout_dir / f"2026-10-11 Workout {routine}.md"
+    saved_note = note.read_bytes()
+
+    # A fresh service and a return to / must agree without starting a new session.
+    reopened = WorkoutService(factory, settings)
+    reopened.today = lambda: "2026-10-11"
+    assert reopened.state()["session"] is None
+    state = client.get("/api/v1/state").json()
+    assert state["session"] is None and state["suggested"] == next_routine
+    assert state["last"] == {"routine": routine, "date": "2026-10-11"}
+    home = client.get("/")
+    assert "Ready for your next session." in home.text
+    assert f"<h2>Workout {next_routine}</h2>" in home.text
+    assert f"Last completed: Workout {routine} on 2026-10-11." in home.text
+    assert 'id="session-form"' not in home.text
+    with factory() as db:
+        assert db.scalar(select(func.count()).select_from(WorkoutSession)) == 3
+
+    # The completed result stays accessible, including explicit same-day starts.
+    saved = client.get(f"/workouts/{workout['id']}")
+    assert "Session complete" in saved.text
+    assert f"/workouts/{workout['id']}" in client.get("/history").text
+    duplicate = client.post("/start", data={"routine": routine}, follow_redirects=False)
+    assert duplicate.headers["location"] == f"/workouts/{workout['id']}"
+    assert client.get(duplicate.headers["location"]).status_code == 200
+    assert note.read_bytes() == saved_note
+
+    next_workout = client.post("/api/v1/sessions", json={}).json()
+    assert next_workout["routine"] == next_routine and next_workout["status"] == "draft"
+    assert client.get("/api/v1/state").json()["session"]["id"] == next_workout["id"]
+
+
 def test_session_edit_remove_undo_and_stale_revision(configured):
     _settings, _factory, service = configured
     a = service.start("A")
@@ -212,6 +252,7 @@ def test_failed_save_recovery_preserves_files_and_does_not_advance(configured):
     assert failed["status"] == "finalizing" and "different" in failed["error"]
     assert collision.read_text() == "An unrelated Obsidian note.\n"
     assert service.state()["suggested"] == "B"
+    assert service.state()["session"]["status"] == "finalizing"
     collision.unlink()  # Only the synthetic temporary-vault collision is removed.
     recovered = WorkoutService(factory, settings)
     recovered.recover_writes()

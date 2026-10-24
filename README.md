@@ -95,6 +95,10 @@ session. Legacy defaults follow recorded order and label that assumption; uncert
 historical planned-set identities remain unknown. Rescan notes with
 `uv run --env-file .env gym-import`; changed imported files are reported as conflicts.
 
+After finishing, returning home shows the next suggested workout ready to start.
+Completed results remain available in **History**. Pending Obsidian saves reopen
+until publication succeeds.
+
 Use **Cancel workout** to end an unfinished draft without saving a completed note.
 Confirm cancellation to return to the workout screen; A/B stays based on the last
 completed session. You can cancel even if an input is unfinished or invalid.

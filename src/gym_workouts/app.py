@@ -175,7 +175,7 @@ def create_app(settings=None):
             return templates.TemplateResponse(
                 request, "workout.html", workout_context(service, workout)
             )
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse(f"/workouts/{workout['id']}", status_code=303)
 
     @app.post("/review/{session_id}")
     def review(request: Request, session_id: str):

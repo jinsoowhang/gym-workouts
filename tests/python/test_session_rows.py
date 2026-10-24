@@ -191,7 +191,7 @@ def test_older_combined_therapy_note_imports_as_separate_rows(configured):
     assert [row.activity_area for row in parsed.rows] == ["Ankle", "elbow"]
     report = import_workouts(factory, settings.workout_dir)
     assert report["imported"] == 1 and not report["issues"]
-    workout = service.state()["session"]
+    workout = service.start("B")
     assert [row["activity_area"] for row in workout["sets"]] == ["Ankle", "elbow"]
     assert path.read_text() == content
 
