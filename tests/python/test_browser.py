@@ -79,6 +79,10 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 page.get_by_role("button", name="Start workout", exact=False).click()
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 expect(field).to_have_value("47.5")
+                expect(page.locator(".weight-guidance")).to_contain_text(
+                    "Consider a small increase"
+                )
+                expect(page.locator(".guidance-history")).to_contain_text("2 days ago")
                 # Swapped fields appear before HTMX attaches their form's event listeners.
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 field.fill("42.125")
@@ -115,6 +119,9 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                     page.get_by_role("button", name="Remove Leg Raise", exact=True)
                 ).to_be_visible()
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                expect(page.locator(".weight-guidance")).to_contain_text(
+                    "Consider a small increase"
+                )
                 expand.focus()
                 expand.press("Space")
                 expect(minimize).to_have_attribute("aria-expanded", "true")
@@ -189,6 +196,7 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 page.get_by_role("button", name="Finish workout").click()
                 expect(page.locator(".session-bar")).to_contain_text("Saved to Obsidian")
                 expect(page.locator(".session-bar .pill")).to_have_text("Completed")
+                expect(page.locator(".weight-guidance")).to_have_count(0)
                 note = settings.workout_dir / "2026-10-11 Workout B.md"
                 assert "deadlift 40.125 7" in note.read_text()
                 assert parse_note(note.read_text()).metadata["therapy_areas"] == "Ankle, Wrist"

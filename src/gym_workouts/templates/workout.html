@@ -67,7 +67,15 @@
         </section>
       {% endfor %}
       </div><aside class="session-sidebar">
-        <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2><p>Adjust your numbers as you go. Use × to remove sets you didn’t do; Finish records everything remaining.</p>
+        <div class="summary-card"><p class="eyebrow">SESSION CHECK-IN</p><h2>Small steps.<br>Steady progress.</h2>
+        {% if weight_guidance %}
+        <div class="weight-guidance" aria-labelledby="weight-guidance-title">
+          <h3 id="weight-guidance-title">{% if weight_guidance.level == 'increase' %}Consider a small increase{% elif weight_guidance.level == 'maintain' %}Maintain your weights{% elif weight_guidance.level == 'reduce' %}Consider starting lighter{% else %}Build your baseline{% endif %}</h3>
+          {% if weight_guidance.previous_date %}<p class="guidance-history">Last Workout {{ session.routine }}: <time datetime="{{ weight_guidance.previous_date }}">{{ weight_guidance.previous_date }}</time> · {{ weight_guidance.days_since }} {{ 'day' if weight_guidance.days_since == 1 else 'days' }} ago.</p>{% endif %}
+          <p>{% if weight_guidance.level == 'increase' %}If your last sets felt comfortable, you could try a small increase today.{% elif weight_guidance.level == 'maintain' %}It’s been at least a week. Keep your usual weights today and see how they feel.{% elif weight_guidance.level == 'reduce' %}It’s been at least two weeks. Consider starting a little lighter and building back up.{% else %}No completed Workout {{ session.routine }} yet. Start with a comfortable weight and record how it feels.{% endif %}</p>
+        </div>
+        {% endif %}
+        <p>Adjust your numbers as you go. Use × to remove sets you didn’t do; Finish records everything remaining.</p>
         <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Anything to remember?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
         <div id="save-status" role="status" aria-live="polite">{% if session.status == 'completed' %}<span class="saved">Session complete{% if session.vault_saved %} · Saved to Obsidian{% endif %}</span>{% elif session.status == 'finalizing' %}<span class="save-error">{{ session.error or 'Save is pending. Retry to finish.' }}</span>{% else %}<span class="saved">Draft saved</span>{% endif %}</div>
         {% if editable %}<button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="cancel" class="secondary cancel-workout" formnovalidate>Cancel workout</button>

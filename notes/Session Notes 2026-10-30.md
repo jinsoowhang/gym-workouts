@@ -47,3 +47,40 @@ notes as one atomic commit. Full publication verification passed 110 Python/brow
 tests, eight dbt models and 35 data tests, Ruff, formatting, compilation, SQLFluff,
 whitespace, and public-file policy. The GitHub noreply identity is retained;
 private deployment scripts, backups, runtime data, and reports remain ignored.
+
+## Check-in weight guidance
+
+Kept “Small steps. Steady progress.” and added a draft-only guidance panel showing
+the date of the latest completed same-routine workout and the elapsed days.
+Under 7 days suggests considering a small increase if the previous sets felt
+comfortable. Exactly 7 through 13 days suggests maintaining; exactly 14 days or
+more suggests considering lighter weights. Without completed same-routine history,
+the panel suggests establishing a comfortable baseline. Guidance is advisory and
+does not adjust saved weights, default values, or recorded results.
+
+History is scoped to the current user and routine, ordered by workout date,
+and excludes unfinished and future sessions. Resuming a draft uses the current
+local day, so guidance changes as time passes. Completed and finalizing views
+omit the panel. No migration or new frontend behavior is needed; the stylesheet
+cache version is updated.
+
+Scoped verification passed 60 guidance/workflow/ownership/session-row tests and
+both existing Chromium recording workflows. Boundary cases include exactly 7
+and 14 days, missing history, older resumed drafts, foreign accounts, future dates,
+unfinished sessions, and out-of-order completions. Three advice states were
+checked visually at 1440 px and 320 px with no overflow or JavaScript errors;
+rendering left the draft unchanged. Screenshots remain ignored in reports.
+
+Full publication verification also passed all 121 Python/browser tests, eight
+dbt models, 35 data tests, Ruff, formatting, compilation, SQLFluff, whitespace,
+and public-file policy. Private runtime data and deployment scripts remain ignored.
+
+Deployed only the six guidance application files, preserving the hosted Dashboard.
+The previous image, source files, and a consistent SQLite backup are retained
+privately. The container is healthy; installed file hashes and the publicly served
+stylesheet match the release. Live A/B history and guidance rendering passed
+without sending recording requests. Workout sessions, sets, routine templates,
+and publication records match the backup, and SQLite integrity is healthy.
+Public health/login return 200, anonymous home redirects to login, and the
+anonymous state API returns 401; no-store caching and the new stylesheet cache
+version were verified. The feature and these notes form one publication change.

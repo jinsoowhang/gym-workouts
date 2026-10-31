@@ -57,6 +57,11 @@ def workout_context(service, workout=None):
     if workout is not None:
         state["session"] = workout
     session = state["session"]
+    state["weight_guidance"] = (
+        service.weight_guidance(session["routine"])
+        if session and session["status"] == "draft"
+        else None
+    )
     state["groups"] = exercise_groups(session["sets"]) if session else []
     state["done"] = sum(r["state"] == "performed" for r in session["sets"]) if session else 0
     state["total"] = sum(r["state"] != "removed" for r in session["sets"]) if session else 0

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from copy import copy
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -69,6 +69,27 @@ class WorkoutService:
     def get(self, session_id):
         with self.factory() as db:
             return session_view(WorkoutRepository(db, self.user_id).get(session_id))
+
+    def weight_guidance(self, routine):
+        today = self.today()
+        with self.factory() as db:
+            previous = WorkoutRepository(db, self.user_id).latest_routine_date(routine, today)
+        days_since = (
+            (date.fromisoformat(today) - date.fromisoformat(previous)).days if previous else None
+        )
+        if days_since is None:
+            level = "baseline"
+        elif days_since >= 14:
+            level = "reduce"
+        elif days_since >= 7:
+            level = "maintain"
+        else:
+            level = "increase"
+        return {
+            "previous_date": previous,
+            "days_since": days_since,
+            "level": level,
+        }
 
     def start(self, routine=None):
         with self.factory() as db:

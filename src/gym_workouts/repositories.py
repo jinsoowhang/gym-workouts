@@ -48,6 +48,19 @@ class WorkoutRepository:
             .limit(1)
         )
 
+    def latest_routine_date(self, routine, on_or_before):
+        return self.db.scalar(
+            select(WorkoutSession.session_date)
+            .where(
+                WorkoutSession.user_id == self.user_id,
+                WorkoutSession.routine == routine,
+                WorkoutSession.status == "completed",
+                WorkoutSession.session_date <= on_or_before,
+            )
+            .order_by(WorkoutSession.session_date.desc())
+            .limit(1)
+        )
+
     def template(self, routine):
         return list(
             self.db.scalars(

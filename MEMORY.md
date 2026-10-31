@@ -7,6 +7,16 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Draft Session check-in retains “Small steps. Steady progress.” and adds weight
+  guidance from the latest completed same-routine workout date: under 7 days
+  suggests considering a small increase if the last sets felt comfortable;
+  7–13 days suggests maintaining; 14+ suggests considering lighter weights.
+  No same-routine history gets baseline guidance. It uses the current local day
+  on reload, ignores unfinished/future/foreign history, and leaves saved weights,
+  defaults, and revisions unchanged. Completed and finalizing views omit guidance.
+  Deployed on 2026-10-30 after 121 Python/browser tests and the full release
+  checks. Installed/public asset hashes, live-history rendering for A/B,
+  HTTPS/authentication boundaries, and unchanged workout records were verified.
 - Up next lists each exercise in the selected routine, including core and physical
   therapy, before starting a session. A/B selection updates the heading, letter,
   and preview together. Lists follow the user's template order and show each
