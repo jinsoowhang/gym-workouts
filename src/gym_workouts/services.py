@@ -43,6 +43,7 @@ class WorkoutService:
             repo = WorkoutRepository(db, self.user_id)
             last = repo.latest_completed()
             visible = repo.active()
+            routines = {routine: repo.template(routine) for routine in ("A", "B")}
             review = list(
                 db.scalars(
                     select(WorkoutSession).where(
@@ -58,7 +59,11 @@ class WorkoutService:
                 "review": [
                     {"id": w.id, "date": w.session_date, "routine": w.routine} for w in review
                 ],
-                "ready": bool(repo.template("A") and repo.template("B")),
+                "ready": all(routines.values()),
+                "routine_previews": {
+                    routine: list(dict.fromkeys(row.exercise.name.title() for row in rows))
+                    for routine, rows in routines.items()
+                },
             }
 
     def get(self, session_id):

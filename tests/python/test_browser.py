@@ -41,6 +41,41 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}")
                 page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
                 expect(page.get_by_role("heading", name="Workout B", exact=True)).to_be_visible()
+                preview = page.locator("[data-routine-preview]:visible")
+                expect(preview.locator("li")).to_have_text(
+                    [
+                        "Deadlift",
+                        "Bench Press",
+                        "Front Raise",
+                        "Leg Raise",
+                        "Left Oblique Raise",
+                        "Right Oblique Raise",
+                        "Physical Therapy",
+                    ]
+                )
+                for width in (1440, 375, 320):
+                    page.set_viewport_size({"width": width, "height": 1000})
+                    page.get_by_label("Today’s routine").select_option("A")
+                    expect(
+                        page.get_by_role("heading", name="Workout A", exact=True)
+                    ).to_be_visible()
+                    expect(preview.locator("li")).to_have_text(
+                        [
+                            "Squat",
+                            "Row",
+                            "Leg Raise",
+                            "Left Oblique Raise",
+                            "Right Oblique Raise",
+                            "Physical Therapy",
+                        ]
+                    )
+                    assert page.evaluate(
+                        "document.documentElement.scrollWidth <= window.innerWidth"
+                    )
+                    page.get_by_label("Today’s routine").select_option("B")
+                    expect(preview.get_by_text("Deadlift", exact=True)).to_be_visible()
+                assert app.state.service.state()["session"] is None
+                page.set_viewport_size({"width": 1440, "height": 1000})
                 page.get_by_role("button", name="Start workout", exact=False).click()
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 expect(field).to_have_value("47.5")
@@ -167,6 +202,7 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 page.reload()
                 expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
                 expect(page.locator("#session-form")).to_have_count(0)
+                expect(preview.get_by_text("Squat", exact=True)).to_be_visible()
                 page.get_by_role("link", name="History", exact=True).click()
                 page.locator(f'a.history-link[href="/workouts/{completed_id}"]').click()
                 expect(page.locator(".session-bar .pill")).to_have_text("Completed")
@@ -196,6 +232,8 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 ).to_be_visible()
                 expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
                 expect(page.locator("#session-form")).to_have_count(0)
+                page.get_by_label("Today’s routine").select_option("B")
+                expect(preview.get_by_text("Deadlift", exact=True)).to_be_visible()
                 page.get_by_role("link", name="Dashboard", exact=True).click()
                 expect(
                     page.get_by_role("heading", name="Your training, over time.")

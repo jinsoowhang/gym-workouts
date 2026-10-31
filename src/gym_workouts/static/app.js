@@ -4,6 +4,21 @@ let changes = 0;
 let acknowledged = 0;
 const minimizedExercises = new Set();
 
+function updateRoutinePreview(select) {
+  const panel = select.closest(".start-panel");
+  panel.querySelector(".routine-letter").textContent = select.value;
+  panel.querySelector("h2").textContent = `Workout ${select.value}`;
+  panel.querySelectorAll("[data-routine-preview]").forEach((preview) => {
+    preview.hidden = preview.dataset.routinePreview !== select.value;
+  });
+}
+
+document.addEventListener("change", (event) => {
+  if (event.target.matches(".start-panel select[name='routine']")) {
+    updateRoutinePreview(event.target);
+  }
+});
+
 function setExerciseMinimized(card, minimized) {
   const button = card.querySelector(".exercise-toggle");
   const body = card.querySelector(".exercise-body");
@@ -48,6 +63,7 @@ function updateValueChange(input) {
 }
 
 document.addEventListener("htmx:load", () => {
+  document.querySelectorAll(".start-panel select[name='routine']").forEach(updateRoutinePreview);
   document.querySelectorAll(".set-input input[data-default]").forEach(updateValueChange);
   document.querySelectorAll(".exercise-card").forEach((card) => {
     setExerciseMinimized(card, minimizedExercises.has(card.querySelector(".exercise-body").id));

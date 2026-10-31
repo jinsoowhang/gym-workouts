@@ -7,6 +7,15 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Up next lists each exercise in the selected routine, including core and physical
+  therapy, before starting a session. A/B selection updates the heading, letter,
+  and preview together. Lists follow the user's template order and show each
+  exercise once. Desktop uses two columns; mobile uses one. Deployed on 2026-10-30
+  after 51 checks against the exact release. Installed file and public asset
+  hashes, live template rendering, HTTPS health/authentication boundaries, and
+  unchanged workout records were verified. Unrelated Dashboard changes remain local.
+  Full publication checks also passed 110 Python/browser tests, eight dbt models,
+  35 data tests, Ruff, formatting, compilation, SQLFluff, and public-file policy.
 - A/B advances after successful completion and Markdown publication.
 - Returning home shows the next suggested workout after completion. Only drafts
   and pending Obsidian saves reopen automatically. Finish still shows a receipt;

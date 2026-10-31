@@ -19,7 +19,15 @@
     <div class="start-panel"><div class="routine-letter" aria-hidden="true">{{ suggested }}</div><div><p class="eyebrow">UP NEXT</p><h2>Workout {{ suggested }}</h2><p>{% if last %}Last completed: Workout {{ last.routine }} on {{ last.date }}.{% else %}Your first session starts with Workout A.{% endif %}</p><p class="muted">Defaults from your last session, with room to adjust.</p></div>
     <form action="/start" method="post" hx-post="/start" hx-target="#workout" hx-swap="outerHTML">
       <label for="routine">Today’s routine</label><select id="routine" name="routine"><option value="A" {% if suggested == 'A' %}selected{% endif %}>Workout A</option><option value="B" {% if suggested == 'B' %}selected{% endif %}>Workout B</option></select><button class="primary" type="submit">Start workout <span aria-hidden="true">↗</span></button>
-    </form></div>
+    </form>
+    <div class="routine-preview" aria-live="polite">
+      {% for routine, exercises in routine_previews.items() %}
+      <section data-routine-preview="{{ routine }}" aria-labelledby="routine-preview-{{ routine }}" {% if routine != suggested %}hidden{% endif %}>
+        <h3 id="routine-preview-{{ routine }}">In Workout {{ routine }}</h3>
+        <ul>{% for exercise in exercises %}<li>{{ exercise }}</li>{% endfor %}</ul>
+      </section>
+      {% endfor %}
+    </div></div>
   {% else %}
     {% set editable = session.status == 'draft' %}
     <div class="session-bar"><div><span class="pill {% if session.status == 'completed' %}complete{% endif %}">{{ 'Completed' if session.status == 'completed' else 'Saving to Obsidian' if session.status == 'finalizing' else 'In progress' }}</span><span class="session-detail" id="progress-summary">{% if editable %}{{ total }} sets & activities included{% else %}{{ done }} sets & activities recorded{% endif %}</span></div><span class="muted">{% if session.vault_saved %}Saved to Obsidian{% elif session.status == 'completed' %}Imported from Obsidian{% else %}Core + physical therapy included{% endif %}</span></div>

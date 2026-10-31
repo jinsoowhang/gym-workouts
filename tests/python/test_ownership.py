@@ -65,6 +65,8 @@ def test_users_have_separate_drafts_defaults_and_session_commands(configured, ot
     guest = other_service
     assert guest.state()["last"] is None
     assert guest.state()["review"] == []
+    assert "Guest Private Exercise" in guest.state()["routine_previews"]["A"]
+    assert "Guest Private Exercise" not in owner.state()["routine_previews"]["A"]
     first = guest.start("A")
     assert first["sets"][0]["weight"] == "1"
     assert first["therapy_areas"] == ""
