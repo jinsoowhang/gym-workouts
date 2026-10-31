@@ -40,13 +40,22 @@ def test_latest_defaults_are_scoped_and_missing_sets_do_not_shift(configured):
 
 
 @pytest.mark.parametrize(("routine", "next_routine"), [("A", "B"), ("B", "A")])
-def test_returning_home_after_finish_shows_next_workout(client, configured, routine, next_routine):
+@pytest.mark.parametrize("htmx", [False, True])
+def test_returning_home_after_finish_shows_next_workout(
+    client, configured, routine, next_routine, htmx
+):
     settings, factory, _service = configured
     workout = client.post("/api/v1/sessions", json={"routine": routine}).json()
     response = client.post(
-        f"/sessions/{workout['id']}/command", data=form_values(workout, action="finish")
+        f"/sessions/{workout['id']}/command",
+        data=form_values(workout, action="finish"),
+        headers={"HX-Request": "true"} if htmx else {},
+        follow_redirects=False,
     )
-    assert response.status_code == 200 and "Session complete" in response.text
+    if htmx:
+        assert response.status_code == 200 and response.headers["HX-Redirect"] == "/"
+    else:
+        assert response.status_code == 303 and response.headers["Location"] == "/"
     note = settings.workout_dir / f"2026-10-11 Workout {routine}.md"
     saved_note = note.read_bytes()
 
@@ -144,7 +153,8 @@ def test_form_finishes_three_of_four_sets_and_new_session_restores_plan(client, 
     values = form_values(removed, action="finish")
     values[f"weight_{bench[2]['id']}"] = "35.125"
     response = client.post(f"/sessions/{workout['id']}/command", data=values)
-    assert response.status_code == 200 and "Saved to Obsidian" in response.text
+    assert response.status_code == 200 and response.url.path == "/"
+    assert service.get(workout["id"])["vault_saved"]
     parsed = parse_note((settings.workout_dir / "2026-10-11 Workout B.md").read_text())
     recorded = [row for row in parsed.rows if row.name == "bench press"]
     assert [row.state for row in recorded] == ["performed"] * 3 + ["removed"]
@@ -260,6 +270,36 @@ def test_failed_save_recovery_preserves_files_and_does_not_advance(configured):
     assert recovered.state()["suggested"] == "A"
     with factory() as db:
         assert db.get(VaultWrite, b["id"]).attempts == 2
+
+
+@pytest.mark.parametrize("htmx", [False, True])
+def test_finish_stays_on_failed_save_and_returns_home_after_retry(client, configured, htmx):
+    settings, _factory, service = configured
+    workout = client.post("/api/v1/sessions", json={"routine": "B"}).json()
+    url = f"/sessions/{workout['id']}/command"
+    collision = settings.workout_dir / "2026-10-11 Workout B.md"
+    collision.write_text("An unrelated synthetic note.\n")
+    headers = {"HX-Request": "true"} if htmx else {}
+    failed = client.post(
+        url, data=form_values(workout, action="finish"), headers=headers, follow_redirects=False
+    )
+    assert failed.status_code == 200 and "Retry Obsidian save" in failed.text
+    assert "HX-Redirect" not in failed.headers and "Location" not in failed.headers
+    assert service.get(workout["id"])["status"] == "finalizing"
+    assert collision.read_text() == "An unrelated synthetic note.\n"
+    collision.unlink()
+    retry = client.post(
+        url,
+        data={"action": "retry", "revision": service.get(workout["id"])["revision"]},
+        headers=headers,
+        follow_redirects=False,
+    )
+    if htmx:
+        assert retry.status_code == 200 and retry.headers["HX-Redirect"] == "/"
+    else:
+        assert retry.status_code == 303 and retry.headers["Location"] == "/"
+    assert service.get(workout["id"])["vault_saved"]
+    assert "<h2>Workout A</h2>" in client.get("/").text
 
 
 def test_crash_after_file_publication_retries_without_duplicate(configured):

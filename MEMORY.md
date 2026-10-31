@@ -28,12 +28,20 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
   35 data tests, Ruff, formatting, compilation, SQLFluff, and public-file policy.
 - A/B advances after successful completion and Markdown publication.
 - Returning home shows the next suggested workout after completion. Only drafts
-  and pending Obsidian saves reopen automatically. Finish still shows a receipt;
-  completed sessions remain available in History and at their workout URLs.
+  and pending Obsidian saves reopen automatically. Finish and successful Obsidian
+  retries navigate home after completion; failed saves keep the retry screen.
+  HTMX completion acknowledges saved edits before redirecting so the unsaved-edit
+  guard does not block navigation. Completed sessions remain available in History
+  and at their workout URLs.
   Explicit same-day starts reopen the existing result without creating duplicates.
-  Deployed on 2026-10-24 after 83 application tests and both browser workflows;
+  The initial return-home fix was deployed on 2026-10-24 after 83 application tests
+  and both browser workflows;
   installed source hashes, live next-workout state, the saved note, and unchanged
   workout records were verified against the deployment backup.
+  Immediate Finish/retry navigation was deployed on 2026-10-30 after 125
+  Python/browser tests and the full release checks. The installed redirect
+  handlers, public script/hash and cache version, HTTPS/authentication boundaries,
+  and unchanged workout records were verified.
 - Defaults use latest completed same-routine results in lb, with template fallbacks.
 - Drafts autosave, resume, reject stale revisions, and preserve edits at Finish.
 - Exercise and individual-set removal are session-only with Undo. All planned sets,

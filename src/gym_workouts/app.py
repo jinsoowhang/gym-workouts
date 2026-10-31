@@ -235,6 +235,10 @@ def create_app(settings=None):
                 status_code=409 if isinstance(exc, ConflictError) else 422,
                 headers={"HX-Retarget": "#save-status", "HX-Reswap": "innerHTML"},
             )
+        if action in ("finish", "retry") and workout["status"] == "completed":
+            if request.headers.get("hx-request"):
+                return HTMLResponse("", headers={"HX-Redirect": "/"})
+            return RedirectResponse("/", status_code=303)
         if action == "save":
             return templates.TemplateResponse(
                 request,

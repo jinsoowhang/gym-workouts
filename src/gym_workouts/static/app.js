@@ -120,6 +120,14 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   }
 });
 
+// A successful Finish redirects before afterRequest; acknowledge its saved edits first.
+document.addEventListener("htmx:beforeOnLoad", (event) => {
+  if (event.detail.elt.id === "session-form" && event.detail.xhr.status === 200 &&
+      event.detail.xhr.getResponseHeader("HX-Redirect") === "/") {
+    acknowledged = Math.max(acknowledged, event.detail.xhr.gymChanges || 0);
+  }
+});
+
 document.addEventListener("htmx:afterRequest", (event) => {
   if (event.detail.elt.id !== "session-form") return;
   event.detail.elt.querySelectorAll("[data-gym-locked]").forEach((field) => {

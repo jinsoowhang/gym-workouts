@@ -36,6 +36,7 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                     executable_path=os.environ.get("GYM_CHROMIUM_PATH") or None
                 )
                 page = browser.new_page(viewport={"width": 1440, "height": 1000})
+                page.route("https://www.youtube-nocookie.com/**", lambda route: route.abort())
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}")
@@ -87,7 +88,9 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 field.fill("42.125")
                 expect(page.locator("#revision")).to_have_value("1")
-                page.reload()
+                completed_id = page.locator("#session-form").get_attribute("action").split("/")[2]
+                home_url = f"http://127.0.0.1:{sock.getsockname()[1]}/"
+                page.goto(f"{home_url}workouts/{completed_id}")
                 page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
                 expect(
                     page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
@@ -193,9 +196,18 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 field.fill("40.125")
                 page.get_by_role("button", name="Minimize Deadlift", exact=True).click()
+                finish_dialogs = []
+
+                def record_finish_dialog(dialog):
+                    finish_dialogs.append(dialog.type)
+                    dialog.dismiss()
+
+                page.on("dialog", record_finish_dialog)
                 page.get_by_role("button", name="Finish workout").click()
-                expect(page.locator(".session-bar")).to_contain_text("Saved to Obsidian")
-                expect(page.locator(".session-bar .pill")).to_have_text("Completed")
+                expect(page).to_have_url(home_url)
+                expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
+                page.remove_listener("dialog", record_finish_dialog)
+                assert not finish_dialogs
                 expect(page.locator(".weight-guidance")).to_have_count(0)
                 note = settings.workout_dir / "2026-10-11 Workout B.md"
                 assert "deadlift 40.125 7" in note.read_text()
@@ -205,8 +217,6 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 ]
                 assert [row.state for row in bench] == ["performed"] * 3 + ["removed", "performed"]
                 assert str(bench[-1].weight) == "35.125"
-                completed_url = page.locator("#session-form").get_attribute("action")
-                completed_id = completed_url.split("/")[2]
                 page.reload()
                 expect(page.get_by_role("heading", name="Workout A", exact=True)).to_be_visible()
                 expect(page.locator("#session-form")).to_have_count(0)

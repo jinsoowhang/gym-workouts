@@ -84,3 +84,38 @@ and publication records match the backup, and SQLite integrity is healthy.
 Public health/login return 200, anonymous home redirects to login, and the
 anonymous state API returns 401; no-store caching and the new stylesheet cache
 version were verified. The feature and these notes form one publication change.
+
+## Return home immediately after Finish
+
+Successful Finish and Obsidian retry submissions now navigate to the home screen
+with the next routine ready to start. Standard forms use a 303 redirect; HTMX
+uses a full-page redirect. Failed publication retains the existing retry screen.
+History and explicit completed-workout URLs remain available.
+
+The browser acknowledges the edits saved by a successful completion response
+before HTMX redirects. This prevents the unsaved-edit guard from blocking a
+successful Finish when the latest input has not autosaved yet. Other navigation
+still retains the guard. The script cache version is updated; no schema change
+is required.
+
+Verification covered both A/B directions, regular and HTMX submissions, failed
+publication and successful retry, note content, and completed History views.
+Both Chromium workflows passed with 20 ms and 200 ms HTMX settling, starting
+Finish from a saved workout URL and checking the actual return to the root URL
+without an unsaved-changes dialog. The workflows retain immediate-before-Finish
+weight and therapy edits. Browser tests block the external warm-up iframe so
+page navigation checks do not depend on YouTube availability.
+
+Full publication verification passed all 125 Python/browser tests, eight dbt
+models, 35 data tests, Ruff, formatting, compilation, SQLFluff, whitespace, and
+public-file policy. JavaScript syntax validation also passed.
+
+Deployed the three application files after preserving the previous image, source,
+and a consistent SQLite backup. The container is healthy and the installed files
+match the tested release. Read-only handler checks confirm regular and HTMX
+Finish/retry redirects without submitting a real workout. Public health/login
+return 200, anonymous home redirects to login, and the state API returns 401.
+The served script hash and updated cache version match the release. Workout
+sessions, sets, routine templates, and publication records match the backup;
+SQLite integrity is healthy. This change and its session notes are published
+as one atomic commit.
