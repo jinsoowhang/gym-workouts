@@ -100,3 +100,32 @@ the previous source/image and a consistent database backup. Installed file hashe
 read-only icon rendering, public asset hashes, HTTPS health/login, and anonymous
 authentication boundaries passed. The container and SQLite integrity are healthy;
 workout records match the backup. The hosted Dashboard is preserved.
+
+## LB arrows in 2.5 lb increments
+
+Changed both directions of the LB spinner and keyboard arrows to 2.5 lb jumps:
+45 → 42.5 down and 45 → 47.5 up. Existing decimal values retain their fractional
+part, manual typing/paste remains available, and changes clamp at the supported
+minimum/maximum. Reps retain their existing controls.
+
+Kept `step="any"` to preserve arbitrary supported decimal entry. A capture-phase
+input listener adjusts Chromium's native arrow events before autosave, while
+leaving typing/paste events unchanged. Previous values are tracked per input and
+initialized after HTMX loads; stepped values retain four-decimal precision. The
+script cache version and recording instructions were updated.
+
+Both recording browser workflows now check actual down/up spinner clicks,
+keyboard arrows, fractional weights, zero, a partial step near zero, a blank
+field, and the upper bound before their existing autosave/reload/Finish checks.
+
+All 41 scoped workflow/browser tests passed locally and against the hosted-source
+candidate, including both HTMX settle delays. JavaScript syntax, Ruff, formatting,
+whitespace, and public-file checks passed.
+
+Deployed the script and its cache version after retaining the previous image,
+source, and a consistent SQLite backup. The app is healthy and installed source
+hashes match the tested release. Public script/stylesheet hashes, the new script
+cache version, read-only workout rendering, HTTPS health/login, and anonymous
+authentication boundaries passed. Workout records match the backup and SQLite
+integrity is healthy. The hosted Dashboard is preserved. Refresh an open workout
+to load the updated script.

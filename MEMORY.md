@@ -12,14 +12,16 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
   Undo retains its text and existing behavior. Deployed on 2026-11-23 after 41
   scoped tests on both local and hosted-candidate code, responsive visual checks,
   and read-only live verification. Hosted records remain unchanged.
-- LB spinner and keyboard arrows adjust by one pound (45 → 44 down), preserving
-  typed decimal weights and the zero lower bound. The field uses `step="any"`
-  for Chromium's native one-pound stepping with decimal entry; server precision
-  validation remains four decimal places. Deployed on 2026-11-23 after 129
-  application/browser tests and 41 scoped tests against the hosted-source release.
-  Installed template, public HTTPS/authentication boundaries, SQLite integrity,
-  and unchanged workout records were verified. Only the workout template changed
-  on the host; private rollback image, source, and database backups are retained.
+- LB spinner and keyboard arrows adjust by 2.5 lb (45 → 42.5 down), preserving
+  typed decimal weights and clamping at the existing bounds. The field retains
+  `step="any"` for decimal entry; a capture-phase input handler adjusts Chromium's
+  native arrow events before autosave, leaving typing/paste unchanged. Previous
+  values initialize after HTMX loads and results retain four-decimal precision.
+  Deployed on 2026-11-23 after 41 scoped workflow/browser tests on both local and
+  hosted-candidate code. Actual up/down clicks, keyboard arrows, decimal weights,
+  blank input, and both bounds passed. Installed files, public assets/cache
+  version, HTTPS/authentication boundaries, SQLite integrity, and unchanged
+  workout records were verified. Private rollback backups are retained.
 - Exercise headers now have a green check action that saves current edits, marks
   all included rows in the card performed, and collapses it after a successful
   save. It covers combined Arms and Physical Therapy cards and preserves removed

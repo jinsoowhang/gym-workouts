@@ -3,6 +3,25 @@
 let changes = 0;
 let acknowledged = 0;
 const exerciseViews = new Map();
+const weightValues = new WeakMap();
+
+// Native number arrows emit Event; typing and pasting emit InputEvent.
+// Keep step="any" for decimal entry and adjust native arrow changes before autosave.
+document.addEventListener("input", (event) => {
+  const input = event.target;
+  if (!input.matches('#session-form input[type="number"][data-unit="lb"]') ||
+      input.readOnly || input.disabled) return;
+  const previous = weightValues.get(input);
+  if (event.isTrusted && !(event instanceof InputEvent) && Number.isFinite(input.valueAsNumber)) {
+    const baseline = Number.isFinite(previous) ? previous : 0;
+    const direction = Math.sign(input.valueAsNumber - baseline);
+    if (direction) {
+      const value = Math.min(Number(input.max), Math.max(Number(input.min), baseline + direction * 2.5));
+      input.value = String(Number(value.toFixed(4)));
+    }
+  }
+  weightValues.set(input, input.valueAsNumber);
+}, true);
 
 function updateRoutinePreview(select) {
   const panel = select.closest(".start-panel");
@@ -62,6 +81,9 @@ function updateValueChange(input) {
 }
 
 document.addEventListener("htmx:load", () => {
+  document.querySelectorAll('input[data-unit="lb"]').forEach((input) => {
+    weightValues.set(input, input.valueAsNumber);
+  });
   document.querySelectorAll(".start-panel select[name='routine']").forEach(updateRoutinePreview);
   document.querySelectorAll(".set-input input[data-default]").forEach(updateValueChange);
   document.querySelectorAll(".exercise-card").forEach((card) => {
