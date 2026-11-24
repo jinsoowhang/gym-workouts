@@ -217,6 +217,13 @@ class WorkoutService:
                             row.previous_state = None
                 elif command.action.startswith("add-set:"):
                     self._append_row(workout, command.action.split(":", 1)[1])
+                elif command.action.startswith("complete:"):
+                    exercise_ids = set(command.action.split(":", 1)[1].split(","))
+                    if not exercise_ids <= {row.exercise_id for row in workout.rows}:
+                        raise ValueError("Exercise is not in this session")
+                    for row in workout.rows:
+                        if row.exercise_id in exercise_ids and row.state != "removed":
+                            row.state = "performed"
                 elif command.action == "mark-all":
                     for row in workout.rows:
                         if row.state == "pending":

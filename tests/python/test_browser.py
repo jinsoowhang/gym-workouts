@@ -161,8 +161,37 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(fifth).to_have_value("40")
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 revision = int(page.locator("#revision").input_value())
-                fifth.fill("35.125")
+                fifth.fill("35")
                 expect(page.locator("#revision")).to_have_value(str(revision + 1))
+                # Complete saves the latest edit and only the included rows in this card.
+                fifth.fill("35.125")
+                check = page.get_by_role("button", name="Mark Bench Press complete", exact=True)
+                check.focus()
+                check.press("Enter")
+                bench_card = page.get_by_role("region", name="Bench Press", exact=True)
+                expect(bench_card.locator(".exercise-body")).not_to_be_visible()
+                expect(bench_card.locator(".exercise-status")).to_have_text("Completed")
+                expect(
+                    page.get_by_role("button", name="Completed Bench Press", exact=True)
+                ).to_be_disabled()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                saved = app.state.service.get(completed_id)
+                bench_rows = [row for row in saved["sets"] if row["name"] == "bench press"]
+                assert [row["state"] for row in bench_rows] == ["performed"] * 3 + [
+                    "removed",
+                    "performed",
+                ]
+                assert bench_rows[-1]["weight"] == "35.125"
+                assert saved["status"] == "draft"
+                for width in (1440, 375, 320):
+                    page.set_viewport_size({"width": width, "height": 1000})
+                    expect(bench_card.locator(".exercise-status")).to_be_visible()
+                    assert page.evaluate(
+                        "document.documentElement.scrollWidth <= window.innerWidth"
+                    )
+                page.set_viewport_size({"width": 1440, "height": 1000})
+                page.get_by_role("button", name="Expand Bench Press", exact=True).click()
+                expect(fifth).to_have_value("35.125")
                 areas = page.get_by_role("textbox", name="Physical Therapy area 1", exact=True)
                 revision = int(page.locator("#revision").input_value())
                 areas.fill("Ankle")
@@ -173,6 +202,8 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 )
                 expect(second_area).to_be_visible()
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                # An explicitly expanded completed card stays open through other actions.
+                expect(fifth).to_be_visible()
                 revision = int(page.locator("#revision").input_value())
                 second_area.fill("Elbow")
                 expect(page.locator("#revision")).to_have_value(str(revision + 1))
@@ -186,13 +217,25 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(second_area).to_have_value("Elbow")
                 page.reload()
                 page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
+                expect(bench_card.locator(".exercise-body")).not_to_be_visible()
+                expect(bench_card.locator(".exercise-status")).to_have_text("Completed")
+                page.get_by_role("button", name="Expand Bench Press", exact=True).click()
                 expect(restore_area).to_be_visible()
                 restore_area.click()
                 expect(areas).to_have_value("Ankle")
                 expect(fifth).to_have_value("35.125")
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
-                # Finish must submit the current input even before a delayed autosave runs.
+                # Therapy uses the same completion action and saves a pending label edit.
                 second_area.fill("Wrist")
+                page.get_by_role(
+                    "button", name="Mark Physical Therapy complete", exact=True
+                ).click()
+                therapy_card = page.get_by_role("region", name="Physical Therapy", exact=True)
+                expect(therapy_card.locator(".exercise-body")).not_to_be_visible()
+                expect(therapy_card.locator(".exercise-status")).to_have_text("Completed")
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                assert app.state.service.get(completed_id)["therapy_areas"] == "Ankle, Wrist"
+                # Finish must submit the current input even before a delayed autosave runs.
                 field = page.get_by_role("spinbutton", name="Deadlift set 1 weight in lb")
                 field.fill("40.125")
                 page.get_by_role("button", name="Minimize Deadlift", exact=True).click()
@@ -233,13 +276,16 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
                 page.get_by_role("spinbutton", name="Squat set 1 weight in lb").fill("")
                 page.get_by_role("button", name="Minimize Squat", exact=True).click()
-                page.get_by_role("button", name="Finish workout").click()
+                page.get_by_role("button", name="Mark Squat complete", exact=True).click()
                 expect(
                     page.get_by_role("spinbutton", name="Squat set 1 weight in lb")
                 ).to_be_visible()
                 expect(
                     page.get_by_role("button", name="Minimize Squat", exact=True)
                 ).to_be_visible()
+                expect(
+                    page.get_by_role("region", name="Squat", exact=True).locator(".exercise-status")
+                ).to_have_count(0)
                 page.once("dialog", lambda dialog: dialog.dismiss())
                 cancel.click()
                 expect(page.locator(".session-bar .pill")).to_have_text("In progress")

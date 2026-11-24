@@ -2,7 +2,7 @@
 
 let changes = 0;
 let acknowledged = 0;
-const minimizedExercises = new Set();
+const exerciseViews = new Map();
 
 function updateRoutinePreview(select) {
   const panel = select.closest(".start-panel");
@@ -29,8 +29,7 @@ function setExerciseMinimized(card, minimized) {
   button.firstChild.textContent = `${label} `;
   button.lastElementChild.textContent = minimized ? "+" : "−";
   button.hidden = false;
-  if (minimized) minimizedExercises.add(body.id);
-  else minimizedExercises.delete(body.id);
+  exerciseViews.set(body.id, { minimized, completed: card.dataset.completed === "true" });
 }
 
 document.addEventListener("click", (event) => {
@@ -66,7 +65,9 @@ document.addEventListener("htmx:load", () => {
   document.querySelectorAll(".start-panel select[name='routine']").forEach(updateRoutinePreview);
   document.querySelectorAll(".set-input input[data-default]").forEach(updateValueChange);
   document.querySelectorAll(".exercise-card").forEach((card) => {
-    setExerciseMinimized(card, minimizedExercises.has(card.querySelector(".exercise-body").id));
+    const previous = exerciseViews.get(card.querySelector(".exercise-body").id);
+    const completed = card.dataset.completed === "true";
+    setExerciseMinimized(card, completed && !previous?.completed ? true : previous?.minimized ?? completed);
   });
 });
 

@@ -7,6 +7,18 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Exercise headers now have a green check action that saves current edits, marks
+  all included rows in the card performed, and collapses it after a successful
+  save. It covers combined Arms and Physical Therapy cards and preserves removed
+  rows. Completion uses existing set states, survives reloads, and shows a
+  Completed label; completed draft cards reload collapsed but can be expanded
+  for editing. Adding a pending row makes the card incomplete again. Finish
+  still publishes the whole workout. Inline SVG avoids emoji-font dependence.
+  Deployed on 2026-11-23 after 129 application/browser tests, the full release
+  checks, and 70 scoped tests against a release based on hosted source. Installed
+  files, public assets, completion rendering, HTTPS/authentication boundaries,
+  SQLite integrity, and unchanged workout records were verified. The hosted
+  Dashboard is preserved; rollback image, source, and database backups are private.
 - Draft Session check-in retains “Small steps. Steady progress.” and adds weight
   guidance from the latest completed same-routine workout date: under 7 days
   suggests considering a small increase if the last sets felt comfortable;

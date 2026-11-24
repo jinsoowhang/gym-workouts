@@ -80,7 +80,10 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
 
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.
 2. Valid edits autosave. Use ×/Undo beside a set for session-only removal, or
-   use the exercise header's × to remove the entire exercise.
+   use the exercise header's × to remove the entire exercise. Select ✅ in an
+   exercise header to save its current values, mark its included rows complete,
+   and minimize the card. Completed cards stay marked and minimized after reload;
+   use **Expand** to review or edit them. Removed rows stay removed.
 3. Use **Add set** if you do extra sets. Enter each Physical Therapy muscle/area
    in its own row; **Add area** creates another and ×/Undo controls each row.
    Add session notes as needed. New workouts reuse the latest therapy areas,

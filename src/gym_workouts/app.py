@@ -45,6 +45,9 @@ def exercise_groups(rows):
                 }
             )
     for group in groups:
+        included = [row for row in group["rows"] if row["state"] != "removed"]
+        group["included"] = bool(included)
+        group["completed"] = bool(included) and all(row["state"] == "performed" for row in included)
         sources = {row["default_source"] for row in group["rows"]}
         group["source_summary"] = group["rows"][0]["default_source"]
         if len(sources) > 1 and "Template" in sources and group["source_summary"] != "Template":
