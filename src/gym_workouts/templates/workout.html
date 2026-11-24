@@ -35,8 +35,8 @@
       <input type="hidden" id="revision" name="revision" value="{{ session.revision }}">
       <div class="session-layout"><div class="exercise-grid">
       {% for group in groups %}
-        {% set collapsed = editable and group.completed %}
-        <section class="exercise-card" aria-label="{{ group.title }}" data-completed="{{ 'true' if collapsed else 'false' }}">
+        {% set collapsed = editable and (group.completed or not group.included) %}
+        <section class="exercise-card" aria-label="{{ group.title }}" data-completed="{{ 'true' if editable and group.completed else 'false' }}" data-removed="{{ 'true' if editable and not group.included else 'false' }}">
           <header class="card-header"><div class="card-heading">{{ exercise_icon(group.title) }}<div><h2>{{ group.title }}</h2>{% if group.completed %}<span class="exercise-status">Completed</span>{% endif %}</div></div>
           <div class="card-actions"><button class="text-button exercise-toggle" type="button" aria-expanded="{{ 'false' if collapsed else 'true' }}" aria-controls="exercise-{{ session.id }}-{{ group.exercises[0].id }}" aria-label="{{ 'Expand' if collapsed else 'Minimize' }} {{ group.title }}" hidden>{{ 'Expand' if collapsed else 'Minimize' }} <span aria-hidden="true">{{ '+' if collapsed else '−' }}</span></button>
           {% if editable %}<button class="icon-button exercise-complete" type="submit" name="action" value="complete:{{ group.exercises|map(attribute='id')|join(',') }}" aria-label="{{ 'Completed ' ~ group.title if group.completed else 'Mark ' ~ group.title ~ ' complete' }}" aria-pressed="{{ 'true' if group.completed else 'false' }}" title="{{ 'Completed' if group.completed else 'Mark complete' }}" {% if group.completed or not group.included %}disabled{% endif %}><svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="4" fill="currentColor"/><path d="m6 12 4 4 8-8" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}

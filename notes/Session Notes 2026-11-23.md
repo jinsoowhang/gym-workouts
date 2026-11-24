@@ -129,3 +129,27 @@ cache version, read-only workout rendering, HTTPS health/login, and anonymous
 authentication boundaries passed. Workout records match the backup and SQLite
 integrity is healthy. The hosted Dashboard is preserved. Refresh an open workout
 to load the updated script.
+
+## Minimize removed exercise cards
+
+Selecting the exercise-header × now collapses its card after removal succeeds,
+matching the completion check's behavior. Fully removed draft cards reload
+collapsed. Header Undo stays visible and restores/expands the card. Explicitly
+expanding a removed card still works, and existing completion/minimize behavior
+is retained. Individual row removals only collapse a card when no included rows
+remain. The script cache version and recording instructions were updated.
+
+Browser workflows cover removal collapse, reload persistence, visible Undo,
+expansion on restoration, and preserving another card's minimize state through
+the form replacement, at both HTMX settle delays.
+
+All 45 scoped workflow, completion, and browser tests passed locally and against
+the prepared hosted release. JavaScript syntax, Ruff, formatting, whitespace,
+and public-file checks passed.
+
+Deployed the script and two templates after retaining rollback source/image and
+a consistent SQLite backup. Installed file hashes and read-only removed-card
+rendering passed. Public assets/cache versions, HTTPS health/login, and anonymous
+authentication boundaries were verified. The container is healthy, workout
+records match the backup, and SQLite integrity is healthy. The hosted Dashboard
+is preserved. Refresh an open workout to load the updated script.

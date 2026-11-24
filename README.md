@@ -81,7 +81,8 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.
    The LB arrows adjust by 2.5 lb; you can type decimal weights directly.
 2. Valid edits autosave. Use ×/Undo beside a set for session-only removal, or
-   use the exercise header's × to remove the entire exercise. Select ✅ in an
+   use the exercise header's × to remove the exercise and minimize its card.
+   **Undo** restores the exercise and expands its card. Select ✅ in an
    exercise header to save its current values, mark its included rows complete,
    and minimize the card. Completed cards stay marked and minimized after reload;
    use **Expand** to review or edit them. Removed rows stay removed.

@@ -9,9 +9,11 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 - Exercise-header removal uses a white cross in a red rounded square matching
   the green completion check's 22 px SVG geometry. Hover preserves both colors;
-  Undo retains its text and existing behavior. Deployed on 2026-11-23 after 41
-  scoped tests on both local and hosted-candidate code, responsive visual checks,
-  and read-only live verification. Hosted records remain unchanged.
+  successful removal collapses the card, and fully removed draft cards reload
+  collapsed. Header Undo remains visible and restores/expands the card. Explicit
+  expand/minimize choices persist through other form replacements. Deployed on
+  2026-11-23 after 45 scoped tests on both local and hosted-candidate code and
+  read-only live verification. Hosted records remain unchanged.
 - LB spinner and keyboard arrows adjust by 2.5 lb (45 → 42.5 down), preserving
   typed decimal weights and clamping at the existing bounds. The field retains
   `step="any"` for decimal entry; a capture-phase input handler adjusts Chromium's

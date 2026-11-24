@@ -48,7 +48,11 @@ function setExerciseMinimized(card, minimized) {
   button.firstChild.textContent = `${label} `;
   button.lastElementChild.textContent = minimized ? "+" : "−";
   button.hidden = false;
-  exerciseViews.set(body.id, { minimized, completed: card.dataset.completed === "true" });
+  exerciseViews.set(body.id, {
+    minimized,
+    completed: card.dataset.completed === "true",
+    removed: card.dataset.removed === "true",
+  });
 }
 
 document.addEventListener("click", (event) => {
@@ -89,7 +93,10 @@ document.addEventListener("htmx:load", () => {
   document.querySelectorAll(".exercise-card").forEach((card) => {
     const previous = exerciseViews.get(card.querySelector(".exercise-body").id);
     const completed = card.dataset.completed === "true";
-    setExerciseMinimized(card, completed && !previous?.completed ? true : previous?.minimized ?? completed);
+    const removed = card.dataset.removed === "true";
+    const restored = previous?.removed && !removed;
+    const newlyCollapsed = (completed && !previous?.completed) || (removed && !previous?.removed);
+    setExerciseMinimized(card, restored ? false : newlyCollapsed ? true : previous?.minimized ?? (completed || removed));
   });
 });
 

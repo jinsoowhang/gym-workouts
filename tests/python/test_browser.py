@@ -145,12 +145,26 @@ def test_desktop_recording_autosave_removal_and_finish(configured, settle_delay)
                     page.get_by_role("button", name="Restore Leg Raise", exact=True)
                 ).to_be_visible()
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                leg_card = page.get_by_role("region", name="Leg Raise", exact=True)
+                expect(leg_card.locator(".exercise-body")).not_to_be_visible()
+                expect(
+                    page.get_by_role("button", name="Expand Leg Raise", exact=True)
+                ).to_be_visible()
                 expect(expand).to_have_attribute("aria-expanded", "false")
+                page.reload()
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
+                expect(leg_card.locator(".exercise-body")).not_to_be_visible()
+                expect(
+                    page.get_by_role("button", name="Restore Leg Raise", exact=True)
+                ).to_be_visible()
+                # A normal minimized card resets after reload; removed cards remain collapsed.
+                page.get_by_role("button", name="Minimize Deadlift", exact=True).click()
                 page.get_by_role("button", name="Restore Leg Raise", exact=True).click()
                 expect(
                     page.get_by_role("button", name="Remove Leg Raise", exact=True)
                 ).to_be_visible()
                 expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                expect(leg_card.locator(".exercise-body")).to_be_visible()
                 expect(page.locator(".weight-guidance")).to_contain_text(
                     "Consider a small increase"
                 )
