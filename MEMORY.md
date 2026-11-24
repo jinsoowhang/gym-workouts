@@ -7,6 +7,14 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- LB spinner and keyboard arrows adjust by one pound (45 → 44 down), preserving
+  typed decimal weights and the zero lower bound. The field uses `step="any"`
+  for Chromium's native one-pound stepping with decimal entry; server precision
+  validation remains four decimal places. Deployed on 2026-11-23 after 129
+  application/browser tests and 41 scoped tests against the hosted-source release.
+  Installed template, public HTTPS/authentication boundaries, SQLite integrity,
+  and unchanged workout records were verified. Only the workout template changed
+  on the host; private rollback image, source, and database backups are retained.
 - Exercise headers now have a green check action that saves current edits, marks
   all included rows in the card performed, and collapses it after a successful
   save. It covers combined Arms and Physical Therapy cards and preserves removed

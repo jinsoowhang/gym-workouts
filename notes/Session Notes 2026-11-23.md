@@ -53,3 +53,27 @@ returns 401; no-store caching remains enforced. Public script and stylesheet
 hashes and cache versions match the release. Workout sessions, sets, routine
 templates, and publication records match the backup; SQLite integrity is healthy.
 Private settings, deployment metadata, backups, and reports remain ignored.
+
+## LB arrow steps
+
+Changed the LB field from a 0.0001 step to the browser's native `step="any"`
+behavior. Chromium's spinner and keyboard arrows now adjust by one pound
+(45 → 44 down, 44 → 45 up), while typed decimal weights remain valid. Decimal
+values retain their fractional part when stepping; zero remains the lower bound.
+The existing server validation still enforces supported weight ranges and four
+decimal places. Reps and saved workout values retain their existing behavior.
+
+Extended both recording browser workflows to exercise an actual spinner click,
+keyboard arrows, decimal entry, and the zero boundary before the existing
+autosave, reload, completion, and Finish checks. Updated the recording instructions.
+All 41 scoped workflow/browser tests also passed against the one-file release
+prepared from the hosted source; unrelated hosted code is preserved.
+
+Deployed only the workout template after retaining the previous image, source,
+and a consistent SQLite backup. The container is healthy and its template hash
+matches the tested release. Read-only template checks confirm `step="any"` on
+all LB fields. Public health/login, authentication boundaries, and unchanged
+script/stylesheet hashes passed. Workout records match the backup and SQLite
+integrity is healthy. No migration or asset cache-version change was needed;
+workout pages use no-store caching. Refresh an open workout to load the new field
+setting. The full application/browser suite passed all 129 tests.
