@@ -7,6 +7,11 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Exercise-header removal uses a white cross in a red rounded square matching
+  the green completion check's 22 px SVG geometry. Hover preserves both colors;
+  Undo retains its text and existing behavior. Deployed on 2026-11-23 after 41
+  scoped tests on both local and hosted-candidate code, responsive visual checks,
+  and read-only live verification. Hosted records remain unchanged.
 - LB spinner and keyboard arrows adjust by one pound (45 → 44 down), preserving
   typed decimal weights and the zero lower bound. The field uses `step="any"`
   for Chromium's native one-pound stepping with decimal entry; server precision

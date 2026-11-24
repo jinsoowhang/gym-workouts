@@ -77,3 +77,26 @@ script/stylesheet hashes passed. Workout records match the backup and SQLite
 integrity is healthy. No migration or asset cache-version change was needed;
 workout pages use no-store caching. Refresh an open workout to load the new field
 setting. The full application/browser suite passed all 129 tests.
+
+## Matching exercise action icons
+
+The exercise-header removal control now shows a white cross in a red rounded
+square, matching the completion check's 22 px size, square geometry, and stroke
+weight. Both icons retain their colors on hover. Removal and Undo behavior,
+accessible button labels, and individual row controls are preserved. The
+stylesheet cache version was updated for the hosted change.
+
+The user requested automatic GitHub pushes and hosted deployment for every
+completed change during this session so changes can be used during the workout.
+
+All 41 scoped workflow/browser tests passed locally and against the prepared
+hosted release. Synthetic screenshots were reviewed at desktop and mobile sizes;
+22 px icon sizes, color-preserving hover, Remove/Undo, and no horizontal overflow
+were checked at 1440/375/320 px. Ruff, formatting, whitespace, and the public-file
+policy passed. No new tests were added for this presentation change.
+
+Deployed the template, stylesheet, and stylesheet cache version after retaining
+the previous source/image and a consistent database backup. Installed file hashes,
+read-only icon rendering, public asset hashes, HTTPS health/login, and anonymous
+authentication boundaries passed. The container and SQLite integrity are healthy;
+workout records match the backup. The hosted Dashboard is preserved.
