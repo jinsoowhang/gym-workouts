@@ -9,6 +9,8 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 - Numeric set rows use less vertical space while keeping 44 px input and button
   heights. Each row has a check beside × that saves completion and current edits.
+  Both icons use matching rounded outlines and stroke widths, with a green check
+  and a red ×.
   A filled green check marks a performed set and can be toggled back to pending.
   Removing and restoring a completed set preserves its completion. Completing the
   last included row retains the existing exercise completion and collapse behavior.

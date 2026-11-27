@@ -73,9 +73,16 @@
             <div class="set-actions">
               {% if row.type == 'weight_reps' and row.state != 'removed' %}
               {% set performed = row.state == 'performed' %}
-              <button class="icon-button set-complete" type="submit" name="action" value="{{ 'reopen-set:' if performed else 'complete-set:' }}{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} complete" aria-pressed="{{ 'true' if performed else 'false' }}" title="{{ 'Mark incomplete' if performed else 'Mark complete' }}"><span aria-hidden="true">✓</span></button>
+              <button class="icon-button set-complete" type="submit" name="action" value="{{ 'reopen-set:' if performed else 'complete-set:' }}{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} complete" aria-pressed="{{ 'true' if performed else 'false' }}" title="{{ 'Mark incomplete' if performed else 'Mark complete' }}">
+                <span class="set-action-mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" focusable="false"><path d="m6 12 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
               {% endif %}
-              <button class="icon-button set-action {{ 'undo' if row.state == 'removed' else '' }}" type="submit" name="action" value="{{ 'restore-set:' if row.state == 'removed' else 'remove-set:' }}{{ row.id }}" aria-label="{{ 'Restore' if row.state == 'removed' else 'Remove' }} {{ row.name|title }} {{ 'area' if row.type == 'activity' else 'set' }} {{ row.occurrence }}">{{ 'Undo' if row.state == 'removed' else '×' }}</button>
+              <button class="icon-button set-action {{ 'undo' if row.state == 'removed' else 'set-remove' if row.type == 'weight_reps' else '' }}" type="submit" name="action" value="{{ 'restore-set:' if row.state == 'removed' else 'remove-set:' }}{{ row.id }}" aria-label="{{ 'Restore' if row.state == 'removed' else 'Remove' }} {{ row.name|title }} {{ 'area' if row.type == 'activity' else 'set' }} {{ row.occurrence }}">
+                {% if row.state == 'removed' %}Undo
+                {% elif row.type == 'weight_reps' %}
+                <span class="set-action-mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" focusable="false"><path d="m6 6 12 12m0-12L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+                {% else %}×{% endif %}
+              </button>
             </div>
             {% elif row.state in ('skipped', 'unknown', 'pending') %}<span class="set-note">{{ 'Completion not specified' if row.state == 'unknown' else row.state|title }}</span>{% endif %}
           </div>

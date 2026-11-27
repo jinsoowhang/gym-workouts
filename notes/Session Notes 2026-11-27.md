@@ -80,3 +80,14 @@ Deployed four application files with a rollback image, source backup and
 consistent SQLite backup. Verified the live set controls and timers through
 read-only rendering, public asset hashes and HTTPS health and login checks.
 SQLite integrity passed and workout records matched the backup.
+
+### Match the set check and remove icons
+
+The check and × share a 21 px rounded outline and the same stroke width. The
+check stays green and fills in when complete. The × uses the same red as the
+exercise header control. Verified icon dimensions, alignment and completed fill
+at 320, 375 and 1440 px. Both recording browser workflows passed against the
+hosted candidate. Ruff, formatting, whitespace and public-file checks passed.
+Deployed the template and stylesheet changes and verified live rendering, asset
+versions, health and login. SQLite integrity passed and workout records matched
+the backup.

@@ -36,7 +36,7 @@
   justify-content: flex-end;
   align-self: start;
 }
-.set-complete, .set-row:not(.activity-row) .set-action:not(.undo) {
+.set-complete, .set-remove {
   min-width: 0;
   width: 40px;
   padding: 0;
@@ -44,7 +44,10 @@
 .set-complete, .set-complete:hover {
   color: var(--green);
 }
-.set-complete span {
+.set-remove, .set-remove:hover {
+  color: #9b3629;
+}
+.set-action-mark {
   display: inline-grid;
   place-items: center;
   width: 21px;
@@ -52,10 +55,8 @@
   border: 1px solid currentColor;
   border-radius: 5px;
   vertical-align: middle;
-  font-size: 15px;
-  line-height: 1;
 }
-.set-complete[aria-pressed="true"] span {
+.set-complete[aria-pressed="true"] .set-action-mark {
   background: var(--green);
   color: white;
   border-color: var(--green);
@@ -71,7 +72,7 @@
   .set-header {
     letter-spacing: .2px;
   }
-  .set-complete, .set-row:not(.activity-row) .set-action:not(.undo) {
+  .set-complete, .set-remove {
     width: 38px;
   }
 }
