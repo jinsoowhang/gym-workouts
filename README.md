@@ -88,7 +88,8 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
    at zero. Timers catch up after backgrounding; reloads resume the workout clock
    and, in the same browser, the rest countdown. Finish or Cancel ends the timers.
 2. Valid edits autosave. Select the check beside a set to mark it complete and
-   select it again to mark it incomplete. Use ×/Undo beside a set for session-only
+   collapse it to a weight and reps summary. Select the check again to reopen
+   the set for edits. Use ×/Undo beside a set for session-only
    removal, or use the exercise header's × to remove the exercise and minimize its card.
    **Undo** restores the exercise and expands its card. Select ✅ in an
    exercise header to save its current values, mark its included rows complete,

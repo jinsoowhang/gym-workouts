@@ -107,3 +107,19 @@ exercise as its card collapses.
 All four browser workflows passed against the hosted candidate. Deployed the
 script and template changes and verified live rendering, public asset versions,
 health and login. SQLite integrity passed and workout records matched the backup.
+
+### Minimize completed sets
+
+Checking off a set replaces its draft inputs with a compact summary of saved
+weight and reps. Collapsed rows keep the check and × accessible. Selecting the
+filled check reopens the set with the saved values. The saved state drives the
+layout on reload and after Undo, and hidden values continue to submit with the
+workout. The final set still triggers the existing exercise card collapse and
+starts the rest timer.
+
+Measured 45 px for a completed row and 57 px for an unchanged editable row at
+320, 375 and 1440 px. Action buttons remain 44 px tall.
+
+Passed 57 scoped local tests and all four browser workflows against the hosted
+candidate. Deployed the templates and stylesheet. Verified live rendering,
+asset versions, HTTPS health and login, SQLite integrity and workout records.

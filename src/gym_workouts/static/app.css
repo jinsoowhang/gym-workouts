@@ -36,6 +36,16 @@
   justify-content: flex-end;
   align-self: start;
 }
+.set-minimized {
+  padding-block: 0;
+  min-height: 0;
+}
+.set-result {
+  grid-column: 2 / 5;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 .set-complete, .set-remove {
   min-width: 0;
   width: 40px;

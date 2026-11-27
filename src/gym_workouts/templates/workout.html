@@ -57,10 +57,16 @@
           {% if group.title == 'Physical Therapy' %}<p><a class="text-button" href="https://app.lainahealth.com/" target="_blank" rel="noopener noreferrer">Open Laina Health <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></p>{% endif %}
           {% if group.rows[0].type == 'weight_reps' %}<div class="set-header"><span>SET</span><span>DEFAULT</span><span>LB</span><span>REPS</span><span aria-hidden="true"></span></div>{% else %}<div class="therapy-header">MUSCLE / AREA</div>{% endif %}
           {% for row in group.rows %}
-          <div class="set-row {{ 'removed' if row.state == 'removed' else '' }} {{ 'activity-row' if row.type == 'activity' else '' }}">
+          {% set minimized = editable and row.type == 'weight_reps' and row.state == 'performed' %}
+          <div class="set-row {{ 'removed' if row.state == 'removed' else '' }} {{ 'activity-row' if row.type == 'activity' else '' }} {{ 'set-minimized' if minimized else '' }}">
             {% if row.state == 'removed' %}<div class="removed-label">{% if row.type == 'weight_reps' %}Set {{ row.occurrence }}{% else %}{{ row.activity_area or 'Area ' ~ row.occurrence }}{% endif %} removed for this session</div>{% endif %}
             {% if group.exercises|length > 1 %}<div class="arm-label">{{ row.name|title }}</div>{% endif %}
-            {% if row.type == 'weight_reps' %}
+            {% if minimized %}
+              <span class="set-number">{{ row.occurrence }}</span>
+              <span class="set-result">{{ row.weight }} lb · {{ row.reps }} {{ 'rep' if row.reps == 1 else 'reps' }}</span>
+              <input type="hidden" name="weight_{{ row.id }}" value="{{ row.weight }}">
+              <input type="hidden" name="reps_{{ row.id }}" value="{{ row.reps }}">
+            {% elif row.type == 'weight_reps' %}
               <span class="set-number">{{ row.occurrence }}</span><span class="default-value" title="{{ row.default_source }}">{{ row.default_weight }} <span>×</span> {{ row.default_reps }}</span>
               <span class="set-input"><input aria-label="{{ row.name|title }} set {{ row.occurrence }} weight in lb" aria-describedby="change-weight-{{ row.id }}" data-default="{{ row.default_weight }}" data-unit="lb" name="weight_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'number' }}" min="0" max="99999999" step="any" value="{{ row.weight }}" {% if not editable %}readonly{% endif %} required><span id="change-weight-{{ row.id }}" class="value-change" hidden><span aria-hidden="true"></span><span class="visually-hidden"></span></span></span>
               <span class="set-input"><input aria-label="{{ row.name|title }} set {{ row.occurrence }} reps" aria-describedby="change-reps-{{ row.id }}" data-default="{{ row.default_reps }}" data-unit="reps" name="reps_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'number' }}" min="0" max="1000000" step="1" value="{{ row.reps }}" {% if not editable %}readonly{% endif %} required><span id="change-reps-{{ row.id }}" class="value-change" hidden><span aria-hidden="true"></span><span class="visually-hidden"></span></span></span>
@@ -73,7 +79,7 @@
             <div class="set-actions">
               {% if row.type == 'weight_reps' and row.state != 'removed' %}
               {% set performed = row.state == 'performed' %}
-              <button class="icon-button set-complete" type="submit" name="action" value="{{ 'reopen-set:' if performed else 'complete-set:' }}{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} complete" aria-pressed="{{ 'true' if performed else 'false' }}" title="{{ 'Mark incomplete' if performed else 'Mark complete' }}">
+              <button id="set-check-{{ row.id }}" class="icon-button set-complete" type="submit" name="action" value="{{ 'reopen-set:' if performed else 'complete-set:' }}{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} complete" aria-pressed="{{ 'true' if performed else 'false' }}" title="{{ 'Reopen set' if performed else 'Mark complete' }}">
                 <span class="set-action-mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" focusable="false"><path d="m6 12 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               </button>
               {% endif %}
