@@ -69,7 +69,14 @@
               <input aria-label="Physical Therapy area {{ row.occurrence }}" name="area_{{ row.id }}" type="{{ 'hidden' if row.state == 'removed' else 'text' }}" maxlength="500" value="{{ row.activity_area }}" placeholder="Muscle / area" {% if not editable %}readonly{% endif %}>
             {% endif %}
             <input type="hidden" name="state_{{ row.id }}" value="{{ row.state }}">
-            {% if editable %}<button class="icon-button set-action {{ 'undo' if row.state == 'removed' else '' }}" type="submit" name="action" value="{{ 'restore-set:' if row.state == 'removed' else 'remove-set:' }}{{ row.id }}" aria-label="{{ 'Restore' if row.state == 'removed' else 'Remove' }} {{ row.name|title }} {{ 'area' if row.type == 'activity' else 'set' }} {{ row.occurrence }}">{{ 'Undo' if row.state == 'removed' else '×' }}</button>
+            {% if editable %}
+            <div class="set-actions">
+              {% if row.type == 'weight_reps' and row.state != 'removed' %}
+              {% set performed = row.state == 'performed' %}
+              <button class="icon-button set-complete" type="submit" name="action" value="{{ 'reopen-set:' if performed else 'complete-set:' }}{{ row.id }}" aria-label="{{ row.name|title }} set {{ row.occurrence }} complete" aria-pressed="{{ 'true' if performed else 'false' }}" title="{{ 'Mark incomplete' if performed else 'Mark complete' }}"><span aria-hidden="true">✓</span></button>
+              {% endif %}
+              <button class="icon-button set-action {{ 'undo' if row.state == 'removed' else '' }}" type="submit" name="action" value="{{ 'restore-set:' if row.state == 'removed' else 'remove-set:' }}{{ row.id }}" aria-label="{{ 'Restore' if row.state == 'removed' else 'Remove' }} {{ row.name|title }} {{ 'area' if row.type == 'activity' else 'set' }} {{ row.occurrence }}">{{ 'Undo' if row.state == 'removed' else '×' }}</button>
+            </div>
             {% elif row.state in ('skipped', 'unknown', 'pending') %}<span class="set-note">{{ 'Completion not specified' if row.state == 'unknown' else row.state|title }}</span>{% endif %}
           </div>
           {% endfor %}
@@ -86,7 +93,7 @@
           <p>{% if weight_guidance.level == 'increase' %}If your last sets felt comfortable, you could try a small increase today.{% elif weight_guidance.level == 'maintain' %}It’s been at least a week. Keep your usual weights today and see how they feel.{% elif weight_guidance.level == 'reduce' %}It’s been at least two weeks. Consider starting a little lighter and building back up.{% else %}No completed Workout {{ session.routine }} yet. Start with a comfortable weight and record how it feels.{% endif %}</p>
         </div>
         {% endif %}
-        <p>Adjust your numbers as you go. Use the check button to complete and minimize an exercise, or × to remove sets you didn’t do; Finish records everything remaining.</p>
+        <p>Use ✓ beside a set to mark it complete, or ✓ in an exercise header to complete the whole exercise. Use × to remove sets you didn’t do. Finish records everything remaining.</p>
         <label for="notes">Session notes</label><textarea id="notes" name="notes" rows="5" placeholder="How did today feel? Anything to remember?" {% if not editable %}readonly{% endif %}>{{ session.notes }}</textarea>
         <div id="save-status" role="status" aria-live="polite">{% if session.status == 'completed' %}<span class="saved">Session complete{% if session.vault_saved %} · Saved to Obsidian{% endif %}</span>{% elif session.status == 'finalizing' %}<span class="save-error">{{ session.error or 'Save is pending. Retry to finish.' }}</span>{% else %}<span class="saved">Draft saved</span>{% endif %}</div>
         {% if editable %}<button type="submit" name="action" value="finish" class="primary finish">Finish workout <span aria-hidden="true">↗</span></button><p class="helper">Saves your completed workout to Obsidian automatically.</p><button type="submit" name="action" value="cancel" class="secondary cancel-workout" formnovalidate>Cancel workout</button>

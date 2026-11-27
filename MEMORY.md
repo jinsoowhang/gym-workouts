@@ -7,6 +7,13 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Numeric set rows use less vertical space while keeping 44 px input and button
+  heights. Each row has a check beside × that saves completion and current edits.
+  A filled green check marks a performed set and can be toggled back to pending.
+  Removing and restoring a completed set preserves its completion. Completing the
+  last included row retains the existing exercise completion and collapse behavior.
+  Deployed on 2026-11-27 after 57 scoped tests locally and against the hosted
+  release. Live rendering, public assets, and database integrity were verified.
 - Draft workouts show a sticky workout stopwatch from the session's UTC creation
   timestamp, plus an independent rest countdown (30/60/90/120/180/300 seconds;
   default 90). Start/Restart rest and Clear do not submit workout edits; changing

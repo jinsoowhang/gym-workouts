@@ -55,3 +55,28 @@ login, and anonymous authentication boundaries passed. SQLite integrity is healt
 and workout records match the backup. No production recording requests were sent.
 Refresh an open workout page to load the new timer controls. Rollback source,
 credentials, database backups, release metadata, and reports remain private.
+
+## Shorter set rows and individual completion
+
+Reduced vertical padding and removed the blank space reserved for value change
+badges. An unchanged numeric row measures 57 px at desktop and phone widths,
+while the inputs and action buttons remain 44 px tall. When a value changes, its
+badge still appears beneath the input.
+
+Each numeric row now has a check beside ×. It saves the current form and marks
+that row performed. A filled green check remains marked on reload. Selecting it
+again reopens the set. Remove and Undo preserve the prior completion state.
+Completing all included sets retains the existing card collapse behavior, and
+the exercise header can still complete the whole card in one action.
+
+Verified individually marking, reopening, editing, reloading, removing and
+restoring a completed set in the existing browser flows at both HTMX settle
+delays. Checked the layout at 320, 375, 650, 1051 and 1440 px with synthetic
+workouts. The 57 scoped local tests, Ruff, formatting, and the public-file policy
+passed.
+
+The same 57 tests passed against the release prepared from the hosted source.
+Deployed four application files with a rollback image, source backup and
+consistent SQLite backup. Verified the live set controls and timers through
+read-only rendering, public asset hashes and HTTPS health and login checks.
+SQLite integrity passed and workout records matched the backup.

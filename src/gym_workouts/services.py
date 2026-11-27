@@ -217,6 +217,17 @@ class WorkoutService:
                             row.previous_state = None
                 elif command.action.startswith("add-set:"):
                     self._append_row(workout, command.action.split(":", 1)[1])
+                elif command.action.startswith(("complete-set:", "reopen-set:")):
+                    action, row_id = command.action.split(":", 1)
+                    row = next((row for row in workout.rows if row.id == row_id), None)
+                    if row is None or row.exercise.measurement_type != "weight_reps":
+                        raise ValueError("Numeric set is not in this session")
+                    if row.state == "removed":
+                        raise ValueError("Restore the set before changing its completion")
+                    if action == "complete-set":
+                        row.state = "performed"
+                    elif row.state == "performed":
+                        row.state = "pending"
                 elif command.action.startswith("complete:"):
                     exercise_ids = set(command.action.split(":", 1)[1].split(","))
                     if not exercise_ids <= {row.exercise_id for row in workout.rows}:
