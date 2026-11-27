@@ -7,6 +7,21 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
 
 ## Behavior and ownership
 
+- Draft workouts show a sticky workout stopwatch from the session's UTC creation
+  timestamp, plus an independent rest countdown (30/60/90/120/180/300 seconds;
+  default 90). Start/Restart rest and Clear do not submit workout edits; changing
+  duration clears the active rest. Zero shows “Rest finished.” Timestamp-based
+  rendering catches up after sleep/backgrounding and survives HTMX replacements.
+  Rest settings/deadlines persist per session in the same browser's local storage,
+  with in-memory fallback when blocked; workout time survives browser changes.
+  Finish/Cancel remove the timers, and completed/history views omit them. No
+  schema migration or stored workout-duration metric was added. Implemented
+  and deployed on 2026-11-27 after 131 local Python/browser tests, the full release
+  checks, and 128 applicable tests against the hosted-source candidate. Three
+  local-only Dashboard-highlight tests do not apply to that candidate. Installed
+  files, public assets/cache versions, HTTPS/authentication boundaries, SQLite
+  integrity, and unchanged workout records were verified. The hosted Dashboard
+  is preserved; rollback source, image, and database backups remain private.
 - Exercise-header removal uses a white cross in a red rounded square matching
   the green completion check's 22 px SVG geometry. Hover preserves both colors;
   successful removal collapses the card, and fully removed draft cards reload

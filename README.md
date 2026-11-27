@@ -80,6 +80,12 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
 
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.
    The LB arrows adjust by 2.5 lb; you can type decimal weights directly.
+   The workout stopwatch starts automatically and stays visible as you scroll.
+   Between sets, choose a **Rest duration** (30 seconds to 5 minutes) and select
+   **Start rest**. **Restart rest** starts the countdown again; **Clear** resets it.
+   Changing the duration clears the current rest. The panel shows **Rest finished**
+   at zero. Timers catch up after backgrounding; reloads resume the workout clock
+   and, in the same browser, the rest countdown. Finish or Cancel ends the timers.
 2. Valid edits autosave. Use ×/Undo beside a set for session-only removal, or
    use the exercise header's × to remove the exercise and minimize its card.
    **Undo** restores the exercise and expands its card. Select ✅ in an

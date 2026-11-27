@@ -31,6 +31,15 @@
   {% else %}
     {% set editable = session.status == 'draft' %}
     <div class="session-bar"><div><span class="pill {% if session.status == 'completed' %}complete{% endif %}">{{ 'Completed' if session.status == 'completed' else 'Saving to Obsidian' if session.status == 'finalizing' else 'In progress' }}</span><span class="session-detail" id="progress-summary">{% if editable %}{{ total }} sets & activities included{% else %}{{ done }} sets & activities recorded{% endif %}</span></div><span class="muted">{% if session.vault_saved %}Saved to Obsidian{% elif session.status == 'completed' %}Imported from Obsidian{% else %}Core + physical therapy included{% endif %}</span></div>
+    {% if editable %}
+    <section class="workout-timers" aria-label="Workout timers" data-session-id="{{ session.id }}" data-started-at="{{ session.created_at }}" hidden>
+      <div class="workout-clock"><span class="eyebrow" id="workout-clock-label">WORKOUT TIME</span><span id="workout-clock" class="timer-clock" role="timer" aria-labelledby="workout-clock-label" aria-live="off">00:00</span></div>
+      <div class="rest-clock"><div><span class="eyebrow" id="rest-clock-label">REST BETWEEN SETS</span><span id="rest-clock" class="timer-clock" role="timer" aria-labelledby="rest-clock-label" aria-live="off">01:30</span></div>
+        <div class="rest-controls"><label for="rest-duration">Rest duration</label><select id="rest-duration"><option value="30">0:30</option><option value="60">1:00</option><option value="90" selected>1:30</option><option value="120">2:00</option><option value="180">3:00</option><option value="300">5:00</option></select><button class="secondary" type="button" data-rest-action="start">Start rest</button><button class="text-button" type="button" data-rest-action="clear">Clear</button><span id="rest-status" role="status">Start after a set.</span></div>
+      </div>
+    </section>
+    <noscript><p class="muted">Enable JavaScript to use workout and rest timers.</p></noscript>
+    {% endif %}
     <form id="session-form" action="/sessions/{{ session.id }}/command" method="post" hx-post="/sessions/{{ session.id }}/command" hx-trigger="input delay:400ms, submit" hx-target="#save-status" hx-swap="innerHTML" hx-sync="this:queue all">
       <input type="hidden" id="revision" name="revision" value="{{ session.revision }}">
       <div class="session-layout"><div class="exercise-grid">

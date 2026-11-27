@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import time
+from datetime import datetime, timedelta
 
 import pytest
 import uvicorn
@@ -9,6 +10,129 @@ from playwright.sync_api import expect, sync_playwright
 
 from gym_workouts.app import create_app
 from gym_workouts.contracts import parse_note
+
+
+@pytest.mark.skipif(
+    os.environ.get("GYM_BROWSER_TESTS") != "1", reason="Opt-in browser verification"
+)
+@pytest.mark.parametrize("settle_delay", [20, 200])
+def test_workout_and_rest_timers(configured, settle_delay):
+    settings, _factory, _service = configured
+    app = create_app(settings)
+    app.state.service.today = lambda: "2026-10-11"
+    server = uvicorn.Server(uvicorn.Config(app, log_level="error"))
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen(128)
+        thread = threading.Thread(target=server.run, kwargs={"sockets": [sock]}, daemon=True)
+        thread.start()
+        deadline = time.monotonic() + 10
+        while not server.started and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert server.started
+        try:
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch(
+                    executable_path=os.environ.get("GYM_CHROMIUM_PATH") or None
+                )
+                page = browser.new_page(viewport={"width": 1440, "height": 1000})
+                page.route("https://www.youtube-nocookie.com/**", lambda route: route.abort())
+                errors = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}")
+                expect(page.get_by_role("region", name="Workout timers")).to_have_count(0)
+                page.evaluate("delay => htmx.config.defaultSettleDelay = delay", settle_delay)
+                page.get_by_role("button", name="Start workout", exact=False).click()
+                panel = page.get_by_role("region", name="Workout timers")
+                expect(panel).to_be_visible()
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                session_id = panel.get_attribute("data-session-id")
+                started_at = datetime.fromisoformat(panel.get_attribute("data-started-at"))
+                page.clock.install(time=started_at)
+                page.clock.pause_at(started_at + timedelta(seconds=10))
+                expect(page.locator("#workout-clock")).to_have_text("00:10")
+                revision = page.locator("#revision").input_value()
+                page.get_by_label("Rest duration").select_option("60")
+                expect(page.locator("#rest-clock")).to_have_text("01:00")
+                page.get_by_role("button", name="Start rest", exact=True).click()
+                page.clock.fast_forward(20_000)
+                expect(page.locator("#rest-clock")).to_have_text("00:40")
+                expect(page.locator("#workout-clock")).to_have_text("00:30")
+                expect(page.locator("#revision")).to_have_value(revision)
+                page.reload()
+                expect(page.locator("#rest-clock")).to_have_text("00:40")
+                expect(page.locator("#workout-clock")).to_have_text("00:30")
+                # A structural HTMX replacement must preserve both clocks.
+                page.get_by_role("button", name="Add set to Bench Press", exact=True).click()
+                expect(
+                    page.get_by_role("spinbutton", name="Bench Press set 3 reps", exact=True)
+                ).to_be_visible()
+                page.clock.run_for(settle_delay + 100)
+                expect(page.locator("#workout.htmx-settling")).to_have_count(0)
+                expect(page.locator("#rest-clock")).to_have_text("00:40")
+                page.clock.fast_forward(45_000)
+                expect(page.locator("#rest-clock")).to_have_text("00:00")
+                expect(page.locator("#rest-status")).to_have_text("Rest finished.")
+                page.get_by_role("button", name="Restart rest", exact=True).click()
+                expect(page.locator("#rest-clock")).to_have_text("01:00")
+                page.clock.fast_forward(5_000)
+                page.get_by_role("button", name="Clear", exact=True).click()
+                expect(page.locator("#rest-clock")).to_have_text("01:00")
+                expect(page.locator("#rest-status")).to_have_text("Start after a set.")
+                # Duration changes clear an active rest; hours do not wrap to zero.
+                page.get_by_role("button", name="Start rest", exact=True).click()
+                page.get_by_label("Rest duration").select_option("120")
+                expect(page.locator("#rest-clock")).to_have_text("02:00")
+                expect(page.get_by_role("button", name="Start rest", exact=True)).to_be_visible()
+                page.clock.fast_forward(3_600_000)
+                expect(page.locator("#workout-clock")).to_have_text("01:01:20")
+                for width in (1440, 375, 320):
+                    page.set_viewport_size({"width": width, "height": 900})
+                    page.locator("#notes").scroll_into_view_if_needed()
+                    expect(panel).to_be_in_viewport()
+                    assert page.evaluate(
+                        "document.documentElement.scrollWidth <= window.innerWidth"
+                    )
+                page.get_by_role("button", name="Start rest", exact=True).click()
+                page.get_by_role("button", name="Finish workout", exact=False).click()
+                page.wait_for_url(f"http://127.0.0.1:{sock.getsockname()[1]}/")
+                expect(panel).to_have_count(0)
+                assert (
+                    page.evaluate("id => localStorage.getItem(`gym-rest:${id}`)", session_id)
+                    is None
+                )
+                page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}/workouts/{session_id}")
+                expect(panel).to_have_count(0)
+                # A different workout starts fresh, even with browser storage blocked.
+                page.clock.resume()
+                page.goto(f"http://127.0.0.1:{sock.getsockname()[1]}/")
+                page.get_by_role("button", name="Start workout", exact=False).click()
+                expect(panel).to_be_visible()
+                expect(page.locator("#rest-clock")).to_have_text("01:30")
+                page.add_init_script(
+                    """for (const method of ['getItem', 'setItem', 'removeItem']) {
+                      Storage.prototype[method] = () => { throw new Error('Storage blocked'); };
+                    }"""
+                )
+                page.reload()
+                page.clock.pause_at(
+                    datetime.fromisoformat(panel.get_attribute("data-started-at"))
+                    + timedelta(hours=2)
+                )
+                page.get_by_role("button", name="Start rest", exact=True).click()
+                page.clock.fast_forward(5_000)
+                expect(page.locator("#rest-clock")).to_have_text("01:25")
+                page.once("dialog", lambda dialog: dialog.accept())
+                page.get_by_role("button", name="Cancel workout", exact=True).click()
+                expect(
+                    page.get_by_role("button", name="Start workout", exact=False)
+                ).to_be_visible()
+                expect(panel).to_have_count(0)
+                assert errors == []
+                browser.close()
+        finally:
+            server.should_exit = True
+            thread.join(timeout=10)
 
 
 @pytest.mark.skipif(

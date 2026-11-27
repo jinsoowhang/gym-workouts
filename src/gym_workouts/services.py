@@ -407,6 +407,7 @@ def session_view(workout):
         "id": workout.id,
         "routine": workout.routine,
         "date": workout.session_date,
+        "created_at": workout.created_at,
         "status": workout.status,
         "revision": workout.revision,
         "notes": workout.notes,

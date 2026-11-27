@@ -4,6 +4,93 @@ let changes = 0;
 let acknowledged = 0;
 const exerciseViews = new Map();
 const weightValues = new WeakMap();
+const restTimers = new Map();
+const restDurations = [30, 60, 90, 120, 180, 300];
+
+function restTimerKey(sessionId) {
+  return `gym-rest:${sessionId}`;
+}
+
+function restTimer(sessionId) {
+  if (!restTimers.has(sessionId)) {
+    let saved;
+    try {
+      saved = JSON.parse(localStorage.getItem(restTimerKey(sessionId)));
+    } catch (_) { /* Timers still work when browser storage is unavailable. */ }
+    restTimers.set(sessionId, {
+      duration: restDurations.includes(saved?.duration) ? saved.duration : 90,
+      endsAt: Number.isFinite(saved?.endsAt) && saved.endsAt > 0 ? saved.endsAt : null,
+    });
+  }
+  return restTimers.get(sessionId);
+}
+
+function saveRestTimer(sessionId, timer) {
+  try {
+    localStorage.setItem(restTimerKey(sessionId), JSON.stringify(timer));
+  } catch (_) { /* Keep the in-memory timer if storage is unavailable. */ }
+}
+
+function formatTimer(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds / 60) % 60;
+  const remainder = seconds % 60;
+  return `${hours ? `${String(hours).padStart(2, "0")}:` : ""}${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function updateWorkoutTimers() {
+  const panel = document.querySelector(".workout-timers");
+  if (!panel) return;
+  const now = Date.now();
+  const startedAt = Date.parse(panel.dataset.startedAt);
+  panel.querySelector("#workout-clock").textContent = formatTimer(
+    Number.isFinite(startedAt) ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0
+  );
+  const timer = restTimer(panel.dataset.sessionId);
+  const remaining = timer.endsAt === null ? timer.duration : Math.max(0, Math.ceil((timer.endsAt - now) / 1000));
+  panel.querySelector("#rest-clock").textContent = formatTimer(remaining);
+  panel.querySelector("#rest-duration").value = String(timer.duration);
+  panel.querySelector('[data-rest-action="start"]').textContent = timer.endsAt === null ? "Start rest" : "Restart rest";
+  const finished = timer.endsAt !== null && remaining === 0;
+  panel.classList.toggle("rest-finished", finished);
+  const status = panel.querySelector("#rest-status");
+  const message = timer.endsAt === null ? "Start after a set." : finished ? "Rest finished." : "Resting…";
+  if (status.textContent !== message) status.textContent = message;
+  panel.hidden = false;
+}
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-rest-action]");
+  if (!button) return;
+  const sessionId = button.closest(".workout-timers").dataset.sessionId;
+  const timer = restTimer(sessionId);
+  timer.endsAt = button.dataset.restAction === "start" ? Date.now() + timer.duration * 1000 : null;
+  saveRestTimer(sessionId, timer);
+  updateWorkoutTimers();
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target.id !== "rest-duration") return;
+  const sessionId = event.target.closest(".workout-timers").dataset.sessionId;
+  const timer = restTimer(sessionId);
+  timer.duration = Number(event.target.value);
+  timer.endsAt = null;
+  saveRestTimer(sessionId, timer);
+  updateWorkoutTimers();
+});
+
+document.addEventListener("htmx:load", updateWorkoutTimers);
+document.addEventListener("visibilitychange", updateWorkoutTimers);
+window.addEventListener("pageshow", updateWorkoutTimers);
+window.addEventListener("storage", (event) => {
+  const panel = document.querySelector(".workout-timers");
+  if (panel && (event.key === null || event.key === restTimerKey(panel.dataset.sessionId))) {
+    restTimers.delete(panel.dataset.sessionId);
+    updateWorkoutTimers();
+  }
+});
+// Derive time from timestamps so background tabs and sleeping phones do not drift.
+setInterval(updateWorkoutTimers, 250);
 
 // Native number arrows emit Event; typing and pasting emit InputEvent.
 // Keep step="any" for decimal entry and adjust native arrow changes before autosave.
@@ -134,6 +221,7 @@ document.addEventListener("htmx:beforeSwap", (event) => {
 document.addEventListener("htmx:beforeRequest", (event) => {
   if (event.detail.elt.id !== "session-form") return;
   event.detail.xhr.gymChanges = changes;
+  event.detail.xhr.gymTimerSession = document.querySelector(".workout-timers")?.dataset.sessionId;
   const receipt = document.getElementById("save-status");
   if (receipt) {
     receipt.classList.remove("save-error");
@@ -152,6 +240,14 @@ document.addEventListener("htmx:beforeRequest", (event) => {
 
 // A successful Finish redirects before afterRequest; acknowledge its saved edits first.
 document.addEventListener("htmx:beforeOnLoad", (event) => {
+  const sessionId = event.detail.xhr.gymTimerSession;
+  if (sessionId && event.detail.xhr.status === 200 &&
+      ["finish", "cancel", "discard"].includes(event.detail.requestConfig.parameters.action)) {
+    restTimers.delete(sessionId);
+    try {
+      localStorage.removeItem(restTimerKey(sessionId));
+    } catch (_) { /* Storage may be unavailable. */ }
+  }
   if (event.detail.elt.id === "session-form" && event.detail.xhr.status === 200 &&
       event.detail.xhr.getResponseHeader("HX-Redirect") === "/") {
     acknowledged = Math.max(acknowledged, event.detail.xhr.gymChanges || 0);
