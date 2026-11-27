@@ -21,6 +21,9 @@ SQLite/DuckDB/dbt pipeline are implemented; hosted analytics remains future work
   default 90). Start/Restart rest and Clear do not submit workout edits; changing
   duration clears the active rest. Zero shows “Rest finished.” Timestamp-based
   rendering catches up after sleep/backgrounding and survives HTMX replacements.
+  Successfully checking off an individual set also starts or restarts the rest
+  countdown using the selected duration. Undoing a check or a rejected save
+  leaves the countdown alone.
   Rest settings/deadlines persist per session in the same browser's local storage,
   with in-memory fallback when blocked; workout time survives browser changes.
   Finish/Cancel remove the timers, and completed/history views omit them. No

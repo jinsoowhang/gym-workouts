@@ -54,19 +54,23 @@ function updateWorkoutTimers() {
   const finished = timer.endsAt !== null && remaining === 0;
   panel.classList.toggle("rest-finished", finished);
   const status = panel.querySelector("#rest-status");
-  const message = timer.endsAt === null ? "Start after a set." : finished ? "Rest finished." : "Resting…";
+  const message = timer.endsAt === null ? "Starts when you check a set." : finished ? "Rest finished." : "Resting…";
   if (status.textContent !== message) status.textContent = message;
   panel.hidden = false;
+}
+
+function setRestRunning(sessionId, running) {
+  const timer = restTimer(sessionId);
+  timer.endsAt = running ? Date.now() + timer.duration * 1000 : null;
+  saveRestTimer(sessionId, timer);
+  updateWorkoutTimers();
 }
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-rest-action]");
   if (!button) return;
   const sessionId = button.closest(".workout-timers").dataset.sessionId;
-  const timer = restTimer(sessionId);
-  timer.endsAt = button.dataset.restAction === "start" ? Date.now() + timer.duration * 1000 : null;
-  saveRestTimer(sessionId, timer);
-  updateWorkoutTimers();
+  setRestRunning(sessionId, button.dataset.restAction === "start");
 });
 
 document.addEventListener("change", (event) => {
@@ -241,12 +245,16 @@ document.addEventListener("htmx:beforeRequest", (event) => {
 // A successful Finish redirects before afterRequest; acknowledge its saved edits first.
 document.addEventListener("htmx:beforeOnLoad", (event) => {
   const sessionId = event.detail.xhr.gymTimerSession;
-  if (sessionId && event.detail.xhr.status === 200 &&
-      ["finish", "cancel", "discard"].includes(event.detail.requestConfig.parameters.action)) {
-    restTimers.delete(sessionId);
-    try {
-      localStorage.removeItem(restTimerKey(sessionId));
-    } catch (_) { /* Storage may be unavailable. */ }
+  if (sessionId && event.detail.xhr.status === 200) {
+    const action = event.detail.requestConfig.parameters.action;
+    if (action.startsWith("complete-set:")) {
+      setRestRunning(sessionId, true);
+    } else if (["finish", "cancel", "discard"].includes(action)) {
+      restTimers.delete(sessionId);
+      try {
+        localStorage.removeItem(restTimerKey(sessionId));
+      } catch (_) { /* Storage may be unavailable. */ }
+    }
   }
   if (event.detail.elt.id === "session-form" && event.detail.xhr.status === 200 &&
       event.detail.xhr.getResponseHeader("HX-Redirect") === "/") {

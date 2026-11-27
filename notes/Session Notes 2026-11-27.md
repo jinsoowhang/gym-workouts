@@ -91,3 +91,19 @@ hosted candidate. Ruff, formatting, whitespace and public-file checks passed.
 Deployed the template and stylesheet changes and verified live rendering, asset
 versions, health and login. SQLite integrity passed and workout records matched
 the backup.
+
+### Start rest when a set is checked off
+
+The rest countdown starts or restarts from the selected duration once an
+individual set completion saves. It uses the same browser timer as Start rest.
+Undoing a check and rejected completion saves leave the current countdown as it
+was. Updated the timer's idle hint and recording instructions.
+
+The timer browser scenarios cover a restart from an active countdown, persistence
+on reload, undo, a rejected stale save, and starting from idle when browser
+storage is blocked. The latter also checks the timer on the final set of an
+exercise as its card collapses.
+
+All four browser workflows passed against the hosted candidate. Deployed the
+script and template changes and verified live rendering, public asset versions,
+health and login. SQLite integrity passed and workout records matched the backup.

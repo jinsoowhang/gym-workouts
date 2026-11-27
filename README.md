@@ -81,8 +81,9 @@ Docker, persistent storage, and direct Google sign-in restricted to the approved
 1. Start the suggested routine or choose A/B. Edit weights and reps in lb.
    The LB arrows adjust by 2.5 lb; you can type decimal weights directly.
    The workout stopwatch starts automatically and stays visible as you scroll.
-   Between sets, choose a **Rest duration** (30 seconds to 5 minutes) and select
-   **Start rest**. **Restart rest** starts the countdown again; **Clear** resets it.
+   Choose a **Rest duration** (30 seconds to 5 minutes). Checking off a set
+   starts the countdown again from that duration. You can also start or restart
+   it manually, or select **Clear** to reset it.
    Changing the duration clears the current rest. The panel shows **Rest finished**
    at zero. Timers catch up after backgrounding; reloads resume the workout clock
    and, in the same browser, the rest countdown. Finish or Cancel ends the timers.
